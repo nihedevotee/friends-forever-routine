@@ -42,10 +42,6 @@
                         <span class="status-dot loading"></span>
                         <span class="status-label">Loading catalog...</span>
                     </div>
-                    <button class="btn btn-ghost btn-sm" id="btnExportData" title="Backup or export groups">
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                        <span>Data</span>
-                    </button>
                     <button class="btn btn-outline btn-sm" id="navAllGroupsBtn" style="display: none;">
                         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
                         <span>All Groups</span>
@@ -602,35 +598,6 @@
 
                 <div class="cft-results-container" id="cftResultsContainer">
                     <!-- Ranked slots (e.g. 10/10 friends free, 8/10 friends free) -->
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 7. BACKUP / EXPORT / IMPORT MODAL -->
-    <div class="modal-backdrop" id="modalBackup" style="display: none;">
-        <div class="modal-card">
-            <div class="modal-header">
-                <h3 class="modal-title">Data Backup & Sync</h3>
-                <button class="modal-close-btn" id="modalBackupClose">&times;</button>
-            </div>
-            <div class="modal-body">
-                <p class="modal-desc">All your groups, friends, and selected courses are automatically saved to your browser's <code>localStorage</code>.</p>
-                <div class="backup-actions-grid">
-                    <div class="backup-box">
-                        <h4>Export JSON</h4>
-                        <p>Download a backup file to keep or share with your friends.</p>
-                        <button class="btn btn-secondary btn-block" id="btnExportJsonFile">Download JSON Backup</button>
-                    </div>
-                    <div class="backup-box">
-                        <h4>Import JSON</h4>
-                        <p>Restore or import friend groups from a previously saved JSON file.</p>
-                        <input type="file" id="importJsonFileInput" accept=".json" style="display: none;">
-                        <button class="btn btn-outline btn-block" id="btnTriggerImportFile">Upload & Import</button>
-                    </div>
-                </div>
-                <div class="backup-reset-zone">
-                    <button class="btn btn-ghost text-danger btn-sm" id="btnResetAllData">Reset All Data & Restore Demo</button>
                 </div>
             </div>
         </div>

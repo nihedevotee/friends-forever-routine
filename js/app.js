@@ -25,7 +25,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const modalCourseSearch = document.getElementById('modalCourseSearch');
     const modalWhosFree = document.getElementById('modalWhosFree');
     const modalCommonFreeTime = document.getElementById('modalCommonFreeTime');
-    const modalBackup = document.getElementById('modalBackup');
 
     // Group dropdown menu
     const btnGroupSettings = document.getElementById('btnGroupSettings');
@@ -61,7 +60,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Close on backdrop click
-    [modalGroup, modalFriend, modalFriendSchedule, modalCourseSearch, modalWhosFree, modalCommonFreeTime, modalBackup].forEach(m => {
+    [modalGroup, modalFriend, modalFriendSchedule, modalCourseSearch, modalWhosFree, modalCommonFreeTime].forEach(m => {
         if (m) {
             m.addEventListener('click', (e) => {
                 if (e.target === m) closeModal(m);
@@ -79,7 +78,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('modalCourseSearchClose')?.addEventListener('click', () => closeModal(modalCourseSearch));
     document.getElementById('modalWhosFreeClose')?.addEventListener('click', () => closeModal(modalWhosFree));
     document.getElementById('modalCommonFreeClose')?.addEventListener('click', () => closeModal(modalCommonFreeTime));
-    document.getElementById('modalBackupClose')?.addEventListener('click', () => closeModal(modalBackup));
 
     // Data Source Status Listener
     window.courseDataManager.onStatusChange((status, detail) => {
@@ -120,7 +118,32 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ----------------------------------------------------
     // NAVIGATION & VIEW SWITCHING
     // ----------------------------------------------------
+    // Browser back/forward support (History API)
+    let isPopNav = false;
+    function pushView(view, id) {
+        if (isPopNav) return;
+        const hash = view === 'group' ? `#group/${encodeURIComponent(id)}` : '#home';
+        if (location.hash === hash) return;
+        history.pushState({ view, id }, '', hash);
+    }
+
+    function applyRouteFromHash() {
+        const m = location.hash.match(/^#group\/(.+)$/);
+        if (m) {
+            showGroupView(decodeURIComponent(m[1]));
+        } else {
+            showLandingView();
+        }
+    }
+
+    window.addEventListener('popstate', () => {
+        [modalGroup, modalFriend, modalFriendSchedule, modalCourseSearch, modalWhosFree, modalCommonFreeTime].forEach(closeModal);
+        isPopNav = true;
+        try { applyRouteFromHash(); } finally { isPopNav = false; }
+    });
+
     function showLandingView() {
+        pushView('landing');
         viewLanding.style.display = 'block';
         viewGroupDetail.style.display = 'none';
         navGroupBreadcrumb.style.display = 'none';
@@ -138,6 +161,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         activeGroupId = groupId;
         window.storageManager.setActiveGroup(groupId);
+        pushView('group', groupId);
 
         viewLanding.style.display = 'none';
         viewGroupDetail.style.display = 'block';
@@ -891,55 +915,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // ----------------------------------------------------
-    // DATA BACKUP & SYNC
-    // ----------------------------------------------------
-    document.getElementById('btnExportData')?.addEventListener('click', () => {
-        openModal(modalBackup);
-    });
-
-    document.getElementById('btnExportJsonFile')?.addEventListener('click', () => {
-        const json = window.storageManager.exportData();
-        downloadFile('friends_forever_backup.json', json, 'application/json');
-    });
-
-    document.getElementById('btnTriggerImportFile')?.addEventListener('click', () => {
-        document.getElementById('importJsonFileInput')?.click();
-    });
-
-    document.getElementById('importJsonFileInput')?.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            const res = window.storageManager.importData(event.target.result);
-            if (res.success) {
-                alert(`Successfully imported ${res.count} group(s)!`);
-                closeModal(modalBackup);
-                if (window.storageManager.activeGroupId) {
-                    showGroupView(window.storageManager.activeGroupId);
-                } else {
-                    showLandingView();
-                }
-            } else {
-                alert(`Import failed: ${res.error}`);
-            }
-        };
-        reader.readAsText(file);
-    });
-
-    document.getElementById('btnResetAllData')?.addEventListener('click', () => {
-        if (confirm("Reset all data and restore demo group? Your customized groups will be erased.")) {
-            window.storageManager.resetAll(window.courseDataManager.normalizedCourses);
-            closeModal(modalBackup);
-            if (window.storageManager.activeGroupId) {
-                showGroupView(window.storageManager.activeGroupId);
-            } else {
-                showLandingView();
-            }
-        }
-    });
-
     function downloadFile(filename, content, type) {
         const blob = new Blob([content], { type });
         const url = URL.createObjectURL(blob);
@@ -962,6 +937,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Pre-create sample group so the user has immediate data to explore
         window.storageManager.loadSampleGroup();
         renderGroupsDashboard();
+    }
+
+    // 1b. Restore the view from the URL (e.g. after refresh)
+    if (/^#group\//.test(location.hash)) {
+        isPopNav = true;
+        try { applyRouteFromHash(); } finally { isPopNav = false; }
     }
 
     // 2. Fetch live data from USIS API
