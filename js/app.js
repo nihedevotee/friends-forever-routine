@@ -698,14 +698,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         const group = window.storageManager.getGroup(activeGroupId);
         if (!group) return;
 
-        // Find unused color from palette if possible
+        // Friend colours must never match the group's accent colour
+        const groupColor = (group.accentColor || '').toLowerCase();
+        const availableColors = FRIEND_COLORS.filter(c => c.hex.toLowerCase() !== groupColor);
+
+        // Find unused color from the remaining palette if possible
         const usedColors = (group.friends || []).map(f => f.color.toLowerCase());
-        const unusedColor = FRIEND_COLORS.find(c => !usedColors.includes(c.hex.toLowerCase())) || FRIEND_COLORS[0];
+        const unusedColor = availableColors.find(c => !usedColors.includes(c.hex.toLowerCase())) || availableColors[0];
 
         document.getElementById('modalFriendTitle').textContent = '+ Add Friend';
         document.getElementById('friendNameInput').value = '';
         document.getElementById('friendNicknameInput').value = '';
-        renderColorPalette('friendColorPalette', FRIEND_COLORS, unusedColor.hex, 'friendColor');
+        renderColorPalette('friendColorPalette', availableColors, unusedColor.hex, 'friendColor');
 
         openModal(modalFriend);
     });
