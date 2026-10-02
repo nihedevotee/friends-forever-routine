@@ -139,9 +139,6 @@ class RoutineRenderer {
                             <span class="routine-sec-pill">Sec ${c.sectionName}</span>
                         </div>
                     </div>
-                    <div class="routine-card-sub">
-                        <span>${c.faculties || ''}</span>
-                    </div>
                     <div class="routine-friend-pill" style="--friend-color: ${f.color}">
                         <span class="friend-color-dot" style="background:${f.color}; color:${f.color}"></span>
                         <span>${f.name}</span>
@@ -170,9 +167,6 @@ class RoutineRenderer {
                     <div class="routine-card-header">
                         <span class="routine-course-code" style="color: #34d399">${c.courseCode}</span>
                         <span class="routine-sec-pill">Sec ${c.sectionName}</span>
-                    </div>
-                    <div class="routine-card-sub">
-                        <span>${c.faculties || ''}</span>
                     </div>
                     <div class="shared-friends-row">
                         ${friendsHtml}

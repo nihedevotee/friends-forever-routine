@@ -1017,13 +1017,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ----------------------------------------------------
     // EXPORT ROUTINE AS IMAGE (html2canvas)
     // ----------------------------------------------------
-    document.getElementById('btnDownloadRoutine')?.addEventListener('click', async () => {
-        const target = document.getElementById('routineExportArea');
-        if (!target) return;
+    // Captures one part of the page as a PNG.
+    //  - buttonId: the export button that was clicked
+    //  - targetEl: element to capture
+    //  - hideEls:  elements to hide while capturing (e.g. exams for the routine image)
+    //  - suffix:   file name ending
+    async function exportAsImage({ buttonId, targetEl, hideEls = [], suffix, padding = '' }) {
+        if (!targetEl) return;
 
-        const originalBtn = document.getElementById('btnDownloadRoutine');
-        const originalText = originalBtn.innerHTML;
-        originalBtn.innerHTML = '<span>Exporting...</span>';
+        const btn = document.getElementById(buttonId);
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<span>Exporting...</span>';
+        btn.disabled = true;
+
+        const prev = {
+            bg: targetEl.style.backgroundColor,
+            padding: targetEl.style.padding,
+            hidden: hideEls.map(el => el.style.display)
+        };
 
         try {
             if (typeof html2canvas === 'undefined') {
@@ -1032,34 +1043,58 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
-            // Temporarily tweak background for clean snapshot
-            const prevBg = target.style.backgroundColor;
-            target.style.backgroundColor = '#0a0e17';
+            // Temporarily tweak the page for a clean snapshot
+            targetEl.style.backgroundColor = '#0a0e17';
+            if (padding) targetEl.style.padding = padding;
+            hideEls.forEach(el => { el.style.display = 'none'; });
 
-            const canvas = await html2canvas(target, {
+            const canvas = await html2canvas(targetEl, {
                 backgroundColor: '#0a0e17',
                 scale: 2, // High resolution
                 logging: false,
                 useCORS: true
             });
 
-            target.style.backgroundColor = prevBg;
-
             const group = window.storageManager.getGroup(activeGroupId);
             const groupSlug = (group ? group.name : 'friends_forever').toLowerCase().replace(/\s+/g, '_');
-            const dataUrl = canvas.toDataURL('image/png');
 
             const link = document.createElement('a');
-            link.download = `${groupSlug}_routine_and_exams.png`;
-            link.href = dataUrl;
+            link.download = `${groupSlug}_${suffix}.png`;
+            link.href = canvas.toDataURL('image/png');
             link.click();
             link.remove();
         } catch (err) {
             console.error("Snapshot export failed:", err);
             alert("Could not export image. Please try again.");
         } finally {
-            originalBtn.innerHTML = originalText;
+            targetEl.style.backgroundColor = prev.bg;
+            targetEl.style.padding = prev.padding;
+            hideEls.forEach((el, i) => { el.style.display = prev.hidden[i]; });
+            btn.innerHTML = originalText;
+            btn.disabled = false;
         }
+    }
+
+    // Routine image: weekly table only (exam schedule is left out)
+    document.getElementById('btnDownloadRoutine')?.addEventListener('click', () => {
+        const area = document.getElementById('routineExportArea');
+        const examSection = area?.querySelector('.exam-schedule-section');
+        exportAsImage({
+            buttonId: 'btnDownloadRoutine',
+            targetEl: area,
+            hideEls: examSection ? [examSection] : [],
+            suffix: 'routine'
+        });
+    });
+
+    // Exam image: exam schedule only
+    document.getElementById('btnDownloadExams')?.addEventListener('click', () => {
+        exportAsImage({
+            buttonId: 'btnDownloadExams',
+            targetEl: document.querySelector('#routineExportArea .exam-schedule-section'),
+            suffix: 'exams',
+            padding: '24px'
+        });
     });
 
     function downloadFile(filename, content, type) {
