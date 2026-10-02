@@ -197,7 +197,7 @@ class RoutineRenderer {
                                 <span>${f.name}</span>
                             </div>
                             <div class="sametime-course-line">
-                                <strong>${c.courseCode}</strong> — Sec ${c.sectionName}${c.faculties ? ' • ' + c.faculties : ''}
+                                <strong>${c.courseCode}</strong> — Sec ${c.sectionName}
                             </div>
                         </div>
                     `;
