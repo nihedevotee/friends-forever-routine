@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FRIENDS FOREVER — Multi-Friend University Routine Planner</title>
+    <meta name="description" content="Your classes. Your friends. One routine. A multi-person routine planner for university friends.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./css/styles.css">
+    <!-- html2canvas for exporting routine as image -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+    <div id="app" class="app-root">
+        <!-- Top Navigation Bar -->
+        <header class="navbar">
+            <div class="nav-container">
+                <div class="brand" id="brandBtn">
+                    <div class="brand-icon">
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                    </div>
+                    <div class="brand-text">
+                        <span class="brand-title">FRIENDS FOREVER</span>
+                        <span class="brand-badge">ROUTINE PLANNER</span>
+                    </div>
+                </div>
+
+                <div class="nav-center" id="navGroupBreadcrumb" style="display: none;">
+                    <span class="nav-divider">/</span>
+                    <span class="nav-group-pill" id="navGroupName">Group Name</span>
+                </div>
+
+                <div class="nav-actions">
+                    <div class="api-status-badge" id="apiStatusBadge" title="Course Data Source">
+                        <span class="status-dot loading"></span>
+                        <span class="status-label">Loading catalog...</span>
+                    </div>
+                    <button class="btn btn-ghost btn-sm" id="btnExportData" title="Backup or export groups">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        <span>Data</span>
+                    </button>
+                    <button class="btn btn-outline btn-sm" id="navAllGroupsBtn" style="display: none;">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                        <span>All Groups</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- MAIN CONTAINER -->
+        <main class="main-content" id="mainView">
+            <!-- 1. LANDING & GROUPS VIEW -->
+            <section id="viewLanding" class="view-panel active">
+                <div class="hero-banner">
+                    <div class="hero-glow"></div>
+                    <div class="hero-content">
+                        <span class="hero-tag">UNIVERSITY MULTI-PERSON SCHEDULER</span>
+                        <h1 class="hero-title">FRIENDS FOREVER</h1>
+                        <p class="hero-subtitle">Your classes. Your friends. One routine.</p>
+                        <p class="hero-desc">
+                            Coordinate schedules with your university circle. Compare class routines, discover shared lectures, find when everyone is free for hangouts, and track all midterm and final exams in one place.
+                        </p>
+                        <div class="hero-actions">
+                            <button class="btn btn-primary btn-lg" id="btnHeroCreateGroup">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                <span>Create a Friend Group</span>
+                            </button>
+                            <button class="btn btn-secondary btn-lg" id="btnHeroDemoGroup">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                                <span>Load Sample Group</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GROUPS DASHBOARD SECTION -->
+                <div class="dashboard-container">
+                    <div class="section-header">
+                        <div>
+                            <h2 class="section-title">Friend Groups</h2>
+                            <p class="section-sub">Select a group to view routines or create a new squad</p>
+                        </div>
+                        <button class="btn btn-primary" id="btnCreateGroup">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                            <span>New Group</span>
+                        </button>
+                    </div>
+
+                    <div class="groups-grid" id="groupsGrid">
+                        <!-- Dynamic Group Cards rendered here -->
+                    </div>
+
+                    <div class="empty-groups-state" id="emptyGroupsState" style="display: none;">
+                        <div class="empty-icon">👥</div>
+                        <h3>No Friend Groups Yet</h3>
+                        <p>Create your first friend group or try out the preloaded sample group to see it in action.</p>
+                        <div class="empty-actions">
+                            <button class="btn btn-primary" id="btnEmptyCreate">Create Friend Group</button>
+                            <button class="btn btn-outline" id="btnEmptyDemo">Load Demo Group</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. GROUP DETAIL VIEW -->
+            <section id="viewGroupDetail" class="view-panel" style="display: none;">
+                <!-- Group Top Bar -->
+                <div class="group-hero-bar" id="groupHeroBar">
+                    <div class="group-hero-info">
+                        <div class="group-color-accent" id="groupAccentBar"></div>
+                        <div>
+                            <div class="group-meta-tag" id="groupCodeTag">GROUP 01</div>
+                            <h1 class="group-hero-name" id="groupDetailName">The Sleep Deprived</h1>
+                            <div class="group-meta-stats" id="groupMetaStats">
+                                <span id="groupFriendsCount">4 Friends</span>
+                                <span class="dot-separator">•</span>
+                                <span id="groupTotalCoursesCount">16 Enrolled Courses</span>
+                                <span class="dot-separator">•</span>
+                                <span id="groupSharedClassesCount">2 Shared Classes</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="group-hero-controls">
+                        <button class="btn btn-secondary btn-sm" id="btnWhoIsFree">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                            <span>Who's Free?</span>
+                        </button>
+                        <button class="btn btn-secondary btn-sm" id="btnCommonFreeTime">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                            <span>Find Common Free Time</span>
+                        </button>
+                        <button class="btn btn-outline btn-sm" id="btnDownloadRoutine" title="Save Routine & Exams as Image">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            <span>Export Image</span>
+                        </button>
+                        <div class="group-menu-dropdown-wrapper">
+                            <button class="btn btn-ghost btn-icon btn-sm" id="btnGroupSettings" title="Group Settings">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+                            </button>
+                            <div class="dropdown-menu" id="groupSettingsMenu" style="display: none;">
+                                <button class="dropdown-item" id="btnEditGroupInfo">Edit Group Name & Color</button>
+                                <button class="dropdown-item" id="btnExportGroupData">Export Group JSON</button>
+                                <hr class="dropdown-divider">
+                                <button class="dropdown-item text-danger" id="btnDeleteCurrentGroup">Delete Group</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FRIENDS STRIP (Card Avatars + Add Friend) -->
+                <div class="friends-strip-section">
+                    <div class="friends-strip-header">
+                        <div class="friends-strip-title">
+                            <h3>Friends in this Group</h3>
+                            <span class="filter-tip">Click <strong>Add Course</strong> on a friend card to enroll them in courses</span>
+                        </div>
+                        <button class="btn btn-primary btn-sm" id="btnAddFriendBtn">
+                            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                            <span>+ Add Friend</span>
+                        </button>
+                    </div>
+
+                    <div class="friends-cards-track" id="friendsCardsTrack">
+                        <!-- Dynamic Friend Badges/Cards Rendered Here -->
+                    </div>
+                </div>
+
+                <!-- MAIN ROUTINE SECTION -->
+                <div class="routine-section-wrapper" id="routineExportArea">
+                    <div class="routine-header-toolbar">
+                        <div class="routine-title-box">
+                            <h2 class="routine-section-heading">Weekly Class Routine</h2>
+                            <p class="routine-section-desc">Unified schedule with automatic shared-class detection & simultaneous time matching</p>
+                        </div>
+                        <div class="routine-legend">
+                            <div class="legend-item">
+                                <span class="legend-badge shared">🎉 Shared Class</span>
+                                <span class="legend-text">Same Course & Section</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-badge sametime">⚡ Same Time</span>
+                                <span class="legend-text">Different Courses</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ROUTINE TABLE CONTAINER (Horizontal Scrollable) -->
+                    <div class="routine-table-container">
+                        <table class="ff-routine-table" id="routineTable">
+                            <thead>
+                                <tr>
+                                    <th class="time-col-header">Time / Day</th>
+                                    <th>Sunday</th>
+                                    <th>Monday</th>
+                                    <th>Tuesday</th>
+                                    <th>Wednesday</th>
+                                    <th>Thursday</th>
+                                    <th>Friday</th>
+                                    <th>Saturday</th>
+                                </tr>
+                            </thead>
+                            <tbody id="routineTableBody">
+                                <!-- Generated Dynamically from actual data & slots -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- EXAM SCHEDULE SECTION -->
+                    <div class="exam-schedule-section">
+                        <div class="exam-schedule-header">
+                            <div>
+                                <h3 class="exam-schedule-heading">📅 Group Exam Schedule</h3>
+                                <p class="exam-schedule-sub">All midterms and finals for enrolled friends grouped chronologically</p>
+                            </div>
+                            <div id="examClashWarningBox" class="exam-clash-warning" style="display: none;"></div>
+                        </div>
+
+                        <div id="examScheduleColumns" class="exam-schedule-columns">
+                            <!-- Left Column: Midterms -->
+                            <div class="exam-schedule-column">
+                                <div class="exam-column-heading mid">
+                                    <span>MIDTERMS</span>
+                                    <span class="exam-count-pill" id="midExamsCount">0</span>
+                                </div>
+                                <div id="examScheduleMidList" class="exam-schedule-list">
+                                    <!-- Dynamic mid exam cards -->
+                                </div>
+                            </div>
+
+                            <!-- Right Column: Finals -->
+                            <div class="exam-schedule-column">
+                                <div class="exam-column-heading final">
+                                    <span>FINALS</span>
+                                    <span class="exam-count-pill" id="finalExamsCount">0</span>
+                                </div>
+                                <div id="examScheduleFinalList" class="exam-schedule-list">
+                                    <!-- Dynamic final exam cards -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="examScheduleEmpty" class="exam-schedule-empty" style="display: none;">
+                            <p>No exams scheduled yet for this group.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- FOOTER -->
+        <footer class="app-footer">
+            <div class="footer-container">
+                <div class="footer-quote">
+                    "For indeed, with hardship comes ease, indeed with hardship comes ease"
+                    <span class="footer-ref">— Quran 94:5-6</span>
+                </div>
+                <div class="footer-links">
+                    <span><strong>Friends Forever</strong> • Powered by Live University Course Data</span>
+                    <span class="footer-sep">|</span>
+                    <a href="https://usis-cdn.eniamza.com/connect-migrate.json" target="_blank" rel="noreferrer">API Source</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- ================= MODALS ================= -->
+
+    <!-- 1. CREATE / EDIT GROUP MODAL -->
+    <div class="modal-backdrop" id="modalGroup" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalGroupTitle">Create Friend Group</h3>
+                <button class="modal-close-btn" id="modalGroupClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label" for="groupNameInput">Group Name</label>
+                    <input type="text" id="groupNameInput" class="form-input" placeholder="e.g. The Sleep Deprived, Tech Titans..." maxlength="40">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Accent Color</label>
+                    <div class="color-palette-selector" id="groupColorPalette">
+                        <!-- Color radio swatches -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" id="modalGroupCancel">Cancel</button>
+                <button class="btn btn-primary" id="modalGroupSubmit">Save Group</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. ADD / EDIT FRIEND MODAL -->
+    <div class="modal-backdrop" id="modalFriend" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalFriendTitle">+ Add Friend</h3>
+                <button class="modal-close-btn" id="modalFriendClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label" for="friendNameInput">Friend Name <span class="required">*</span></label>
+                    <input type="text" id="friendNameInput" class="form-input" placeholder="e.g. Younus, Rahim, Fahim..." maxlength="30">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="friendNicknameInput">Nickname (optional)</label>
+                    <input type="text" id="friendNicknameInput" class="form-input" placeholder="e.g. Bro, Captain, Sleepy..." maxlength="20">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Friend Color <span class="field-hint">(Distinct color for routine blocks & dots)</span></label>
+                    <div class="color-palette-selector" id="friendColorPalette">
+                        <!-- Friend Color swatches -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" id="modalFriendCancel">Cancel</button>
+                <button class="btn btn-primary" id="modalFriendSubmit">Save Friend</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. FRIEND PROFILE & COURSE MANAGER DRAWER / MODAL -->
+    <div class="modal-backdrop" id="modalFriendSchedule" style="display: none;">
+        <div class="modal-card modal-lg">
+            <div class="modal-header friend-schedule-header">
+                <div class="friend-profile-info">
+                    <div class="friend-avatar-large" id="friendProfileAvatar">Y</div>
+                    <div>
+                        <div class="friend-profile-title-row">
+                            <h3 class="modal-title" id="friendProfileName">Younus</h3>
+                            <span class="friend-profile-nickname" id="friendProfileNick">(Bro)</span>
+                        </div>
+                        <div class="friend-profile-stats">
+                            <span id="friendCreditsBadge">0 Credits</span>
+                            <span class="dot-separator">•</span>
+                            <span id="friendCoursesCountBadge">0 Courses</span>
+                        </div>
+                    </div>
+                </div>
+                <button class="modal-close-btn" id="modalFriendScheduleClose">&times;</button>
+            </div>
+
+            <div class="modal-body friend-courses-body">
+                <!-- Enrolled courses list -->
+                <div class="enrolled-courses-section">
+                    <div class="enrolled-header">
+                        <h4>Enrolled Courses</h4>
+                        <button class="btn btn-primary btn-sm" id="btnOpenCourseSearch">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                            <span>+ Add Course</span>
+                        </button>
+                    </div>
+
+                    <div id="friendConflictAlert" class="conflict-alert-box" style="display: none;"></div>
+
+                    <div class="enrolled-courses-list" id="friendEnrolledList">
+                        <!-- Dynamic list of friend's courses -->
+                    </div>
+
+                    <div class="empty-enrolled-state" id="emptyEnrolledState" style="display: none;">
+                        <p>No courses added yet for this friend.</p>
+                        <p class="empty-sub">Click <strong>+ Add Course</strong> to search by course code, section, or faculty from live university data.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer friend-schedule-footer">
+                <button class="btn btn-ghost text-danger" id="btnDeleteFriend">Remove Friend</button>
+                <button class="btn btn-primary" id="btnDoneFriendSchedule">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. COURSE SEARCH & ADD MODAL -->
+    <div class="modal-backdrop" id="modalCourseSearch" style="display: none;">
+        <div class="modal-card modal-xl">
+            <div class="modal-header">
+                <div>
+                    <h3 class="modal-title">Search & Add Course</h3>
+                    <p class="modal-subtitle">Browse live course catalog, view sections, faculty, timings, and check for schedule clashes</p>
+                </div>
+                <button class="modal-close-btn" id="modalCourseSearchClose">&times;</button>
+            </div>
+
+            <div class="modal-body course-search-body">
+                <!-- Search Filter Bar -->
+                <div class="search-bar-row">
+                    <div class="search-input-wrap">
+                        <svg class="search-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <input type="text" id="courseSearchInput" class="form-input search-input" placeholder="Search by course code, name, section, faculty (e.g. CSE330, ALB, Algorithms)...">
+                        <button class="clear-search-btn" id="btnClearSearch" style="display: none;">&times;</button>
+                    </div>
+                    <div class="filter-controls">
+                        <select id="filterDepartment" class="form-select">
+                            <option value="">All Departments</option>
+                        </select>
+                        <select id="filterDay" class="form-select">
+                            <option value="">Any Day</option>
+                            <option value="Sunday">Sunday</option>
+                            <option value="Monday">Monday</option>
+                            <option value="Tuesday">Tuesday</option>
+                            <option value="Wednesday">Wednesday</option>
+                            <option value="Thursday">Thursday</option>
+                            <option value="Saturday">Saturday</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Two-Column Layout: Search Results List & Course Detail Preview -->
+                <div class="course-picker-grid">
+                    <!-- Left: Results list -->
+                    <div class="course-results-col">
+                        <div class="results-status-bar">
+                            <span id="courseResultsCount">Showing courses...</span>
+                        </div>
+                        <div class="course-results-list" id="courseResultsList">
+                            <!-- Dynamic course search result items -->
+                        </div>
+                        <div class="catalog-loading-state" id="catalogLoadingState">
+                            <div class="spinner"></div>
+                            <p>Loading course data...</p>
+                        </div>
+                        <div class="catalog-error-state" id="catalogErrorState" style="display: none;">
+                            <p>⚠️ Unable to load course data.</p>
+                            <button class="btn btn-secondary btn-sm" id="btnRetryFetch">Please try again</button>
+                        </div>
+                        <div class="catalog-empty-state" id="catalogEmptyState" style="display: none;">
+                            <p>No courses found matching your search.</p>
+                        </div>
+                    </div>
+
+                    <!-- Right: Selected Course / Section Preview -->
+                    <div class="course-preview-col" id="coursePreviewCol">
+                        <div class="preview-empty-state" id="previewEmptyState">
+                            <p>Select a section from the list to view complete schedule, faculty, seat status, exam dates, and clash validation.</p>
+                        </div>
+
+                        <div class="preview-card" id="previewCard" style="display: none;">
+                            <div class="preview-card-header">
+                                <div>
+                                    <div class="preview-badge-row">
+                                        <span class="preview-code-badge" id="prevCode">CSE330</span>
+                                        <span class="preview-section-badge" id="prevSection">Sec 15</span>
+                                        <span class="preview-credit-badge" id="prevCredit">3.0 Cr</span>
+                                    </div>
+                                    <h4 class="preview-title" id="prevTitle">Numerical Methods</h4>
+                                </div>
+                            </div>
+
+                            <div class="preview-info-grid">
+                                <div class="preview-info-item">
+                                    <span class="preview-label">Faculty</span>
+                                    <span class="preview-val" id="prevFaculty">ALB</span>
+                                </div>
+                                <div class="preview-info-item">
+                                    <span class="preview-label">Room</span>
+                                    <span class="preview-val" id="prevRoom">UB0901</span>
+                                </div>
+                                <div class="preview-info-item">
+                                    <span class="preview-label">Seats</span>
+                                    <span class="preview-val" id="prevSeats">35 / 35 (0 left)</span>
+                                </div>
+                            </div>
+
+                            <!-- Class Timing Schedule -->
+                            <div class="preview-section-block">
+                                <h5 class="preview-block-heading">Class Schedule</h5>
+                                <div class="schedule-pill-list" id="prevClassScheduleList"></div>
+                            </div>
+
+                            <!-- Lab Timing Schedule (if present) -->
+                            <div class="preview-section-block" id="prevLabScheduleBlock" style="display: none;">
+                                <h5 class="preview-block-heading">Lab Schedule</h5>
+                                <div class="schedule-pill-list" id="prevLabScheduleList"></div>
+                            </div>
+
+                            <!-- Exam Details -->
+                            <div class="preview-section-block">
+                                <h5 class="preview-block-heading">Exams</h5>
+                                <div class="preview-exam-details" id="prevExamDetails"></div>
+                            </div>
+
+                            <!-- Conflict Alert in Preview -->
+                            <div class="preview-conflict-banner" id="prevConflictBanner" style="display: none;">
+                                <span class="conflict-icon">⚠️</span>
+                                <span class="conflict-text" id="prevConflictText">Clash detected!</span>
+                            </div>
+
+                            <!-- Add Button -->
+                            <div class="preview-footer-action">
+                                <button class="btn btn-primary btn-block" id="btnAddSectionToFriend">
+                                    <span>Add to Schedule</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. "WHO'S FREE?" MODAL -->
+    <div class="modal-backdrop" id="modalWhosFree" style="display: none;">
+        <div class="modal-card modal-lg">
+            <div class="modal-header">
+                <div>
+                    <h3 class="modal-title">⚡ Who's Free?</h3>
+                    <p class="modal-subtitle">Pick a university day and time slot to instantly check who is free or in class</p>
+                </div>
+                <button class="modal-close-btn" id="modalWhosFreeClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="whos-free-selectors">
+                    <div class="form-group flex-1">
+                        <label class="form-label">Day of Week</label>
+                        <select id="whosFreeDaySelect" class="form-select">
+                            <option value="Sunday">Sunday</option>
+                            <option value="Monday">Monday</option>
+                            <option value="Tuesday">Tuesday</option>
+                            <option value="Wednesday" selected>Wednesday</option>
+                            <option value="Thursday">Thursday</option>
+                            <option value="Friday">Friday</option>
+                            <option value="Saturday">Saturday</option>
+                        </select>
+                    </div>
+                    <div class="form-group flex-2">
+                        <label class="form-label">Time Slot</label>
+                        <select id="whosFreeTimeSelect" class="form-select">
+                            <!-- Populated with standard time slots -->
+                        </select>
+                    </div>
+                </div>
+
+                <div class="whos-free-results-grid">
+                    <!-- Free column -->
+                    <div class="whos-free-col free-col">
+                        <div class="whos-free-col-header">
+                            <span class="status-indicator-dot free"></span>
+                            <h4>FREE</h4>
+                            <span class="count-pill" id="whosFreeCount">0</span>
+                        </div>
+                        <div class="whos-free-list" id="whosFreeList">
+                            <!-- Free friend cards -->
+                        </div>
+                    </div>
+
+                    <!-- Busy column -->
+                    <div class="whos-free-col busy-col">
+                        <div class="whos-free-col-header">
+                            <span class="status-indicator-dot busy"></span>
+                            <h4>BUSY IN CLASS</h4>
+                            <span class="count-pill" id="whosBusyCount">0</span>
+                        </div>
+                        <div class="whos-free-list" id="whosBusyList">
+                            <!-- Busy friend cards with class & room info -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. "FIND COMMON FREE TIME" MODAL -->
+    <div class="modal-backdrop" id="modalCommonFreeTime" style="display: none;">
+        <div class="modal-card modal-lg">
+            <div class="modal-header">
+                <div>
+                    <h3 class="modal-title">🤝 Find Common Free Time</h3>
+                    <p class="modal-subtitle">Automatically discover overlapping free windows across all or selected friends</p>
+                </div>
+                <button class="modal-close-btn" id="modalCommonFreeClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Friend Selection Filter for Common Free Time -->
+                <div class="cft-friend-picker">
+                    <label class="form-label">Include Friends in Match:</label>
+                    <div class="cft-friends-checkboxes" id="cftFriendsCheckboxes">
+                        <!-- Friend checkboxes -->
+                    </div>
+                </div>
+
+                <div class="cft-day-filter-bar">
+                    <span class="filter-label">Filter Day:</span>
+                    <button class="cft-day-chip active" data-day="ALL">All Days</button>
+                    <button class="cft-day-chip" data-day="Sunday">Sun</button>
+                    <button class="cft-day-chip" data-day="Monday">Mon</button>
+                    <button class="cft-day-chip" data-day="Tuesday">Tue</button>
+                    <button class="cft-day-chip" data-day="Wednesday">Wed</button>
+                    <button class="cft-day-chip" data-day="Thursday">Thu</button>
+                    <button class="cft-day-chip" data-day="Saturday">Sat</button>
+                </div>
+
+                <div class="cft-results-container" id="cftResultsContainer">
+                    <!-- Ranked slots (e.g. 10/10 friends free, 8/10 friends free) -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 7. BACKUP / EXPORT / IMPORT MODAL -->
+    <div class="modal-backdrop" id="modalBackup" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title">Data Backup & Sync</h3>
+                <button class="modal-close-btn" id="modalBackupClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-desc">All your groups, friends, and selected courses are automatically saved to your browser's <code>localStorage</code>.</p>
+                <div class="backup-actions-grid">
+                    <div class="backup-box">
+                        <h4>Export JSON</h4>
+                        <p>Download a backup file to keep or share with your friends.</p>
+                        <button class="btn btn-secondary btn-block" id="btnExportJsonFile">Download JSON Backup</button>
+                    </div>
+                    <div class="backup-box">
+                        <h4>Import JSON</h4>
+                        <p>Restore or import friend groups from a previously saved JSON file.</p>
+                        <input type="file" id="importJsonFileInput" accept=".json" style="display: none;">
+                        <button class="btn btn-outline btn-block" id="btnTriggerImportFile">Upload & Import</button>
+                    </div>
+                </div>
+                <div class="backup-reset-zone">
+                    <button class="btn btn-ghost text-danger btn-sm" id="btnResetAllData">Reset All Data & Restore Demo</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="./js/data.js"></script>
+    <script src="./js/storage.js"></script>
+    <script src="./js/routine.js"></script>
+    <script src="./js/whosfree.js"></script>
+    <script src="./js/exams.js"></script>
+    <script src="./js/app.js"></script>
+</body>
+</html>
