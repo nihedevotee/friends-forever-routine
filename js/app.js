@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const modalGroup = document.getElementById('modalGroup');
     const modalFriend = document.getElementById('modalFriend');
     const modalFriendSchedule = document.getElementById('modalFriendSchedule');
+    const modalImport = document.getElementById('modalScreenshotImport');
     const modalCourseSearch = document.getElementById('modalCourseSearch');
     const modalWhosFree = document.getElementById('modalWhosFree');
     const modalCommonFreeTime = document.getElementById('modalCommonFreeTime');
@@ -60,7 +61,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Close on backdrop click
-    [modalGroup, modalFriend, modalFriendSchedule, modalCourseSearch, modalWhosFree, modalCommonFreeTime].forEach(m => {
+    [modalGroup, modalFriend, modalFriendSchedule, modalCourseSearch, modalImport, modalWhosFree, modalCommonFreeTime].forEach(m => {
         if (m) {
             m.addEventListener('click', (e) => {
                 if (e.target === m) closeModal(m);
@@ -137,7 +138,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     window.addEventListener('popstate', () => {
-        [modalGroup, modalFriend, modalFriendSchedule, modalCourseSearch, modalWhosFree, modalCommonFreeTime].forEach(closeModal);
+        [modalGroup, modalFriend, modalFriendSchedule, modalCourseSearch, modalImport, modalWhosFree, modalCommonFreeTime].forEach(closeModal);
         isPopNav = true;
         try { applyRouteFromHash(); } finally { isPopNav = false; }
     });
@@ -687,6 +688,148 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Close search modal, refresh friend schedule modal & group routine
         closeModal(modalCourseSearch);
+        openFriendScheduleModal(activeFriendId);
+        renderGroupDetailView();
+    });
+
+    // ----------------------------------------------------
+    // IMPORT COURSES FROM A SCREENSHOT
+    // ----------------------------------------------------
+    const importInput = document.getElementById('importScreenshotInput');
+    const importBtn = document.getElementById('btnImportScreenshot');
+    const importStatus = document.getElementById('importOcrStatus');
+    const importConfirmBtn = document.getElementById('btnImportConfirm');
+    let importItems = []; // [{ course, conflict, checked }]
+
+    function setImportStatus(text) {
+        if (!importStatus) return;
+        importStatus.textContent = text || '';
+        importStatus.style.display = text ? 'block' : 'none';
+    }
+
+    function updateImportConfirmButton() {
+        const count = importItems.filter(it => it.checked).length;
+        if (!importConfirmBtn) return;
+        importConfirmBtn.disabled = count === 0;
+        importConfirmBtn.textContent = count > 0 ? `Add ${count} selected` : 'Add selected';
+    }
+
+    function showImportReview(matched, unmatched) {
+        const group = window.storageManager.getGroup(activeGroupId);
+        const friend = group ? group.friends.find(f => f.id === activeFriendId) : null;
+        const enrolled = friend ? (friend.courses || []) : [];
+
+        importItems = matched.map(m => {
+            const conflict = window.courseDataManager.checkConflict(m.course, enrolled);
+            return { course: m.course, conflict, checked: !conflict.hasClash };
+        });
+
+        const listEl = document.getElementById('importFoundList');
+        const missingEl = document.getElementById('importMissing');
+        const subtitleEl = document.getElementById('importSubtitle');
+
+        if (subtitleEl) {
+            subtitleEl.textContent = `Found ${importItems.length} course${importItems.length === 1 ? '' : 's'} in the screenshot for ${friend ? friend.name : 'this friend'}.`;
+        }
+
+        if (listEl) {
+            listEl.innerHTML = importItems.length === 0
+                ? '<p class="import-empty">No matching sections were found in the course catalog.</p>'
+                : importItems.map((it, i) => {
+                    const c = it.course;
+                    const clash = it.conflict.hasClash;
+                    const clashBadge = clash
+                        ? `<span class="csc-clash-pill">${it.conflict.type === 'duplicate' ? 'Already Added' : 'Clash'}</span>`
+                        : '';
+                    const timing = (c.sessions || []).map(s => `${s.day.slice(0, 3)} ${s.startTime}`).join(', ');
+                    return `
+                        <label class="import-row ${clash ? 'has-clash' : ''}">
+                            <input type="checkbox" data-index="${i}" ${it.checked ? 'checked' : ''}>
+                            <div class="import-row-main">
+                                <div class="import-row-top">
+                                    <strong>${c.courseCode}</strong>
+                                    <span class="csc-sec">Sec ${c.sectionName}</span>
+                                    ${clashBadge}
+                                </div>
+                                <div class="import-row-sub">${c.courseName} • ${c.faculties || 'TBA'}</div>
+                                <div class="import-row-time">${timing || 'Schedule TBA'}</div>
+                            </div>
+                        </label>
+                    `;
+                }).join('');
+        }
+
+        if (missingEl) {
+            if (unmatched.length > 0) {
+                missingEl.style.display = 'block';
+                missingEl.textContent = 'Not found in the catalog (add manually if needed): ' +
+                    unmatched.map(e => `${e.code}${e.suffix || ''} Sec ${String(e.section).padStart(2, '0')}`).join(', ');
+            } else {
+                missingEl.style.display = 'none';
+                missingEl.textContent = '';
+            }
+        }
+
+        updateImportConfirmButton();
+        openModal(modalImport);
+    }
+
+    importBtn?.addEventListener('click', () => importInput?.click());
+
+    importInput?.addEventListener('change', async (e) => {
+        const file = e.target.files && e.target.files[0];
+        e.target.value = '';
+        if (!file || !activeGroupId || !activeFriendId) return;
+
+        const catalog = window.courseDataManager.normalizedCourses || [];
+        if (catalog.length === 0) {
+            alert('The course catalog has not loaded yet. Wait for it to finish loading (top right) and try again.');
+            return;
+        }
+
+        if (importBtn) importBtn.disabled = true;
+        setImportStatus('Preparing image…');
+
+        try {
+            const entries = await window.screenshotImporter.readEntries(file, (label, progress) => {
+                setImportStatus(`${label} ${Math.round((progress || 0) * 100)}%`);
+            });
+
+            if (entries.length === 0) {
+                alert('No course codes were found in that image. Try a sharper screenshot that shows the full routine table (like "CSE470 -01 -...").');
+                return;
+            }
+
+            const { matched, unmatched } = window.screenshotImporter.matchCatalog(entries, catalog);
+            showImportReview(matched, unmatched);
+        } catch (err) {
+            console.error('Screenshot import failed:', err);
+            alert(`Could not read the screenshot: ${err.message || err}`);
+        } finally {
+            setImportStatus('');
+            if (importBtn) importBtn.disabled = false;
+        }
+    });
+
+    document.getElementById('importFoundList')?.addEventListener('change', (e) => {
+        const cb = e.target.closest('input[type="checkbox"]');
+        if (!cb) return;
+        const item = importItems[parseInt(cb.dataset.index, 10)];
+        if (item) item.checked = cb.checked;
+        updateImportConfirmButton();
+    });
+
+    document.getElementById('modalImportClose')?.addEventListener('click', () => closeModal(modalImport));
+    document.getElementById('btnImportCancel')?.addEventListener('click', () => closeModal(modalImport));
+
+    importConfirmBtn?.addEventListener('click', () => {
+        if (!activeGroupId || !activeFriendId) return;
+        importItems.forEach(it => {
+            if (it.checked) {
+                window.storageManager.addCourseToFriend(activeGroupId, activeFriendId, it.course);
+            }
+        });
+        closeModal(modalImport);
         openFriendScheduleModal(activeFriendId);
         renderGroupDetailView();
     });
