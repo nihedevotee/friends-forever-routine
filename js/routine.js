@@ -217,6 +217,22 @@ class RoutineRenderer {
     }
 
     /**
+     * Shrink the header of days that have no classes (e.g. Friday -> "Fri")
+     */
+    updateHeader(dayHasClass, anyClass) {
+        const headers = document.querySelectorAll('#routineTable thead th');
+        WEEK_DAYS.forEach((day, i) => {
+            const th = headers[i + 1]; // index 0 is the time column
+            if (!th) return;
+            if (!th.dataset.full) th.dataset.full = th.textContent.trim();
+            const isEmpty = anyClass && !dayHasClass[day];
+            th.classList.toggle('day-empty', isEmpty);
+            th.textContent = isEmpty ? th.dataset.full.slice(0, 3) : th.dataset.full;
+            th.title = isEmpty ? `${th.dataset.full} — no classes` : '';
+        });
+    }
+
+    /**
      * Render the whole routine table for the active group
      */
     render(group) {
@@ -236,18 +252,39 @@ class RoutineRenderer {
 
         const matrix = this.buildScheduleMatrix(group.friends);
 
+        // ---- Smart layout: trim empty periods at the top/bottom, shrink empty days ----
+        const cellHasClass = (day, slot) => (matrix[`${day}_${slot.id}`] || []).length > 0;
+        const dayHasClass = {};
+        WEEK_DAYS.forEach(day => {
+            dayHasClass[day] = STANDARD_TIME_SLOTS.some(slot => cellHasClass(day, slot));
+        });
+        const anyClass = WEEK_DAYS.some(day => dayHasClass[day]);
+
+        let visibleSlots = STANDARD_TIME_SLOTS;
+        if (anyClass) {
+            const slotHasClass = slot => WEEK_DAYS.some(day => cellHasClass(day, slot));
+            let first = 0;
+            let last = STANDARD_TIME_SLOTS.length - 1;
+            while (first < last && !slotHasClass(STANDARD_TIME_SLOTS[first])) first++;
+            while (last > first && !slotHasClass(STANDARD_TIME_SLOTS[last])) last--;
+            visibleSlots = STANDARD_TIME_SLOTS.slice(first, last + 1);
+        }
+
+        this.updateHeader(dayHasClass, anyClass);
+
         let rowsHtml = '';
 
-        STANDARD_TIME_SLOTS.forEach(slot => {
+        visibleSlots.forEach(slot => {
             let cellsHtml = '';
 
             WEEK_DAYS.forEach(day => {
                 const items = matrix[`${day}_${slot.id}`] || [];
                 const analysis = this.analyzeSlotItems(items);
                 const content = this.renderCellContent(analysis);
+                const emptyDayClass = (anyClass && !dayHasClass[day]) ? ' day-empty' : '';
 
                 cellsHtml += `
-                    <td class="routine-cell" data-day="${day}" data-slot="${slot.id}">
+                    <td class="routine-cell${emptyDayClass}" data-day="${day}" data-slot="${slot.id}">
                         ${content}
                     </td>
                 `;

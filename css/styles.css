@@ -5,13 +5,13 @@
 
 :root {
     --bg-main: #000000;
-    --bg-surface: #0a0a0a;
-    --bg-surface-elevated: #141414;
-    --bg-card: #0d0d0d;
-    --bg-card-hover: #171717;
-    --bg-input: #050505;
+    --bg-surface: #111111;
+    --bg-surface-elevated: #1c1c1c;
+    --bg-card: #151515;
+    --bg-card-hover: #1f1f1f;
+    --bg-input: #0c0c0c;
     
-    --border-subtle: rgba(255, 255, 255, 0.07);
+    --border-subtle: rgba(255, 255, 255, 0.09);
     --border-medium: rgba(255, 255, 255, 0.14);
     --border-accent: rgba(34, 211, 238, 0.4);
     
@@ -954,6 +954,24 @@ html, body {
     transition: background 0.15s ease;
 }
 
+.ff-routine-table th.day-empty,
+.ff-routine-table td.day-empty {
+    width: 44px;
+    min-width: 44px;
+    max-width: 44px;
+    padding: 8px 2px;
+}
+
+.ff-routine-table th.day-empty {
+    font-size: 0.65rem;
+    letter-spacing: 0;
+    color: var(--text-muted);
+}
+
+.ff-routine-table td.day-empty {
+    background: rgba(255, 255, 255, 0.015);
+}
+
 .routine-cell:hover {
     background: rgba(255, 255, 255, 0.02);
 }
@@ -962,7 +980,7 @@ html, body {
 
 /* Single Class Block */
 .routine-class-card {
-    background: rgba(255, 255, 255, 0.035);
+    background: rgba(255, 255, 255, 0.07);
     border: 1px solid var(--border-subtle);
     border-left: 3px solid var(--friend-color, var(--color-cyan));
     border-radius: var(--radius-sm);
@@ -973,7 +991,7 @@ html, body {
 }
 
 .routine-class-card:hover {
-    background: rgba(255, 255, 255, 0.07);
+    background: rgba(255, 255, 255, 0.11);
     transform: scale(1.02);
     z-index: 5;
 }
@@ -1064,7 +1082,7 @@ html, body {
 
 /* SAME TIME Block (Core USP from user request!) */
 .routine-sametime-card {
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(255, 255, 255, 0.06);
     border: 1px solid rgba(245, 158, 11, 0.35);
     border-radius: var(--radius-sm);
     padding: 8px;
@@ -1096,7 +1114,7 @@ html, body {
 }
 
 .sametime-entry {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.07);
     padding: 5px 6px;
     border-radius: 4px;
     border-left: 2px solid var(--friend-color, #fbbf24);
