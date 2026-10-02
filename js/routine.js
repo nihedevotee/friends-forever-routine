@@ -140,7 +140,6 @@ class RoutineRenderer {
                         </div>
                     </div>
                     <div class="routine-card-sub">
-                        <span>${s.room || c.roomName || 'TBA'}</span>
                         <span>${c.faculties || ''}</span>
                     </div>
                     <div class="routine-friend-pill" style="--friend-color: ${f.color}">
@@ -173,7 +172,6 @@ class RoutineRenderer {
                         <span class="routine-sec-pill">Sec ${c.sectionName}</span>
                     </div>
                     <div class="routine-card-sub">
-                        <span>Room: ${s.room || c.roomName || 'TBA'}</span>
                         <span>${c.faculties || ''}</span>
                     </div>
                     <div class="shared-friends-row">
@@ -199,10 +197,7 @@ class RoutineRenderer {
                                 <span>${f.name}</span>
                             </div>
                             <div class="sametime-course-line">
-                                <strong>${c.courseCode}</strong> — Sec ${c.sectionName}
-                            </div>
-                            <div class="sametime-room-line">
-                                Room: ${s.room || c.roomName || 'TBA'} ${c.faculties ? '• ' + c.faculties : ''}
+                                <strong>${c.courseCode}</strong> — Sec ${c.sectionName}${c.faculties ? ' • ' + c.faculties : ''}
                             </div>
                         </div>
                     `;
@@ -211,15 +206,8 @@ class RoutineRenderer {
 
             return `
                 <div class="routine-sametime-card">
-                    <div class="sametime-header">
-                        <span class="sametime-title">⚡ SAME TIME</span>
-                        <span class="count-pill">${analysis.totalFriends}</span>
-                    </div>
                     <div class="sametime-entries-list">
                         ${entriesHtml}
-                    </div>
-                    <div class="sametime-footer-text">
-                        ${analysis.totalFriends} friends • Different courses
                     </div>
                 </div>
             `;
