@@ -5,6 +5,9 @@
  */
 
 const OCR_LIB_URL = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+const PDF_LIB_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+const PDF_WORKER_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+const MAX_PDF_PAGES = 10;
 
 class ScreenshotImporter {
     constructor() {
@@ -43,23 +46,7 @@ class ScreenshotImporter {
                     const ctx = canvas.getContext('2d', { willReadFrequently: true });
                     ctx.imageSmoothingQuality = 'high';
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                    const px = imageData.data;
-                    let sum = 0;
-                    for (let i = 0; i < px.length; i += 4) {
-                        const g = 0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2];
-                        px[i] = px[i + 1] = px[i + 2] = g;
-                        sum += g;
-                    }
-                    const dark = (sum / (px.length / 4)) < 128;
-                    if (dark) {
-                        for (let i = 0; i < px.length; i += 4) {
-                            px[i] = px[i + 1] = px[i + 2] = 255 - px[i];
-                        }
-                    }
-                    ctx.putImageData(imageData, 0, 0);
-                    resolve(canvas);
+                    resolve(this.enhanceCanvas(canvas));
                 } catch (err) {
                     reject(err);
                 } finally {
@@ -74,39 +61,145 @@ class ScreenshotImporter {
         });
     }
 
-    /** Run OCR and return the recognised text (tries two layout modes if the first finds nothing) */
+    /** Grayscale and (for dark pages) invert a canvas in place so the text is dark-on-light */
+    enhanceCanvas(canvas) {
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const px = imageData.data;
+        let sum = 0;
+        for (let i = 0; i < px.length; i += 4) {
+            const g = 0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2];
+            px[i] = px[i + 1] = px[i + 2] = g;
+            sum += g;
+        }
+        if ((sum / (px.length / 4)) < 128) {
+            for (let i = 0; i < px.length; i += 4) {
+                px[i] = px[i + 1] = px[i + 2] = 255 - px[i];
+            }
+        }
+        ctx.putImageData(imageData, 0, 0);
+        return canvas;
+    }
+
+    isPdf(file) {
+        return file && (file.type === 'application/pdf' || /\.pdf$/i.test(file.name || ''));
+    }
+
+    /** Load PDF.js only when a PDF is first imported */
+    loadPdfLibrary() {
+        if (window.pdfjsLib) return Promise.resolve();
+        if (!this.pdfPromise) {
+            this.pdfPromise = new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = PDF_LIB_URL;
+                script.onload = () => {
+                    window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDF_WORKER_URL;
+                    resolve();
+                };
+                script.onerror = () => {
+                    this.pdfPromise = null;
+                    reject(new Error('Could not load the PDF reader. Please check your internet connection.'));
+                };
+                document.head.appendChild(script);
+            });
+        }
+        return this.pdfPromise;
+    }
+
+    /** Read a PDF: use its text layer first, fall back to OCR on rendered pages (scanned PDFs) */
+    async readPdf(file, onProgress) {
+        await this.loadPdfLibrary();
+        onProgress && onProgress('Opening PDF…', 0.02);
+        const data = await file.arrayBuffer();
+        let pdf;
+        try {
+            pdf = await window.pdfjsLib.getDocument({ data }).promise;
+        } catch (err) {
+            throw new Error('That PDF could not be opened (it may be damaged or password-protected).');
+        }
+
+        const pageCount = Math.min(pdf.numPages, MAX_PDF_PAGES);
+
+        // 1) Fast path: real text inside the PDF
+        let text = '';
+        for (let p = 1; p <= pageCount; p++) {
+            const page = await pdf.getPage(p);
+            const content = await page.getTextContent();
+            text += content.items.map(it => it.str).join(' ') + '\n';
+            onProgress && onProgress('Reading PDF text…', 0.05 + 0.2 * (p / pageCount));
+        }
+        const direct = this.parseText(text);
+        if (direct.length > 0) return direct;
+
+        // 2) Scanned PDF: render each page to an image and OCR it
+        const canvases = [];
+        for (let p = 1; p <= pageCount; p++) {
+            const page = await pdf.getPage(p);
+            const base = page.getViewport({ scale: 1 });
+            const scale = Math.min(3, Math.max(1, 2400 / base.width));
+            const viewport = page.getViewport({ scale });
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.round(viewport.width);
+            canvas.height = Math.round(viewport.height);
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            await page.render({ canvasContext: ctx, viewport }).promise;
+            canvases.push(this.enhanceCanvas(canvas));
+            onProgress && onProgress('Preparing PDF pages…', 0.25 + 0.1 * (p / pageCount));
+        }
+        return this.ocrCanvases(canvases, onProgress);
+    }
+
+    /** Read an image or PDF and return the course entries found in it */
     async readEntries(file, onProgress) {
-        await this.loadLibrary();
+        if (this.isPdf(file)) return this.readPdf(file, onProgress);
         onProgress && onProgress('Preparing image…', 0.02);
         const canvas = await this.preprocess(file);
+        return this.ocrCanvases([canvas], onProgress);
+    }
 
-        let lastText = '';
+    /** Run OCR over one or more canvases (tries two layout modes per page if the first finds nothing) */
+    async ocrCanvases(canvases, onProgress) {
+        await this.loadLibrary();
+
+        const found = new Map();
+        const addEntries = (list) => list.forEach(e => {
+            const key = `${e.code}|${e.section}`;
+            if (!found.has(key)) found.set(key, e);
+            else if (e.suffix && !found.get(key).suffix) found.get(key).suffix = e.suffix;
+        });
+
         let worker = null;
         try {
             worker = await window.Tesseract.createWorker('eng', 1, {
                 logger: (m) => {
                     if (!onProgress || !m) return;
                     if (m.status === 'recognizing text') {
-                        onProgress('Reading text…', 0.15 + 0.85 * (m.progress || 0));
+                        onProgress('Reading text…', 0.35 + 0.65 * (m.progress || 0));
                     } else if (m.status) {
                         onProgress('Loading reader (first time takes a few seconds)…', 0.05);
                     }
                 }
             });
 
-            for (const mode of ['11', '6']) {
-                await worker.setParameters({ tessedit_pageseg_mode: mode });
-                const { data } = await worker.recognize(canvas);
-                lastText = data.text || '';
-                const entries = this.parseText(lastText);
-                if (entries.length > 0) return entries;
+            for (const canvas of canvases) {
+                for (const mode of ['11', '6']) {
+                    await worker.setParameters({ tessedit_pageseg_mode: mode });
+                    const { data } = await worker.recognize(canvas);
+                    const entries = this.parseText(data.text || '');
+                    if (entries.length > 0) {
+                        addEntries(entries);
+                        break;
+                    }
+                }
             }
         } finally {
             if (worker) {
                 try { await worker.terminate(); } catch (e) { /* ignore */ }
             }
         }
-        return this.parseText(lastText);
+        return Array.from(found.values());
     }
 
     /**

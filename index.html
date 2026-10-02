@@ -7,7 +7,7 @@
     <meta name="description" content="Your classes. Your friends. One routine. A multi-person routine planner for university friends.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./css/styles.css">
     <!-- html2canvas for exporting routine as image -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -348,15 +348,15 @@
                     <div class="enrolled-header">
                         <h4>Enrolled Courses</h4>
                         <div class="enrolled-header-actions">
-                            <button class="btn btn-outline btn-sm" id="btnImportScreenshot" title="Add all courses from a screenshot of the routine">
-                                <span>📷 Import Screenshot</span>
+                            <button class="btn btn-outline btn-sm" id="btnImportScreenshot" title="Add all courses from a screenshot or PDF of the routine">
+                                <span>📷 Import Image / PDF</span>
                             </button>
                             <button class="btn btn-primary btn-sm" id="btnOpenCourseSearch">
                                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                                 <span>+ Add Course</span>
                             </button>
                         </div>
-                        <input type="file" id="importScreenshotInput" accept="image/*" style="display: none;">
+                        <input type="file" id="importScreenshotInput" accept="image/*,application/pdf,.pdf" style="display: none;">
                     </div>
 
                     <div class="import-status" id="importOcrStatus" style="display: none;"></div>
@@ -514,7 +514,7 @@
         <div class="modal-card modal-lg">
             <div class="modal-header">
                 <div>
-                    <h3 class="modal-title">Import from Screenshot</h3>
+                    <h3 class="modal-title">Import from Image / PDF</h3>
                     <p class="modal-subtitle" id="importSubtitle">Check the courses we found, then add them.</p>
                 </div>
                 <button class="modal-close-btn" id="modalImportClose">&times;</button>

@@ -788,7 +788,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         if (importBtn) importBtn.disabled = true;
-        setImportStatus('Preparing image…');
+        setImportStatus('Preparing file…');
 
         try {
             const entries = await window.screenshotImporter.readEntries(file, (label, progress) => {
@@ -796,7 +796,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
 
             if (entries.length === 0) {
-                alert('No course codes were found in that image. Try a sharper screenshot that shows the full routine table (like "CSE470 -01 -...").');
+                alert('No course codes were found in that file. Try a sharper screenshot or PDF that shows the full routine table (like "CSE470 -01 -...").');
                 return;
             }
 

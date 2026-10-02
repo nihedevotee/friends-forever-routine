@@ -27,7 +27,7 @@
     --color-purple: #a855f7;
     --color-orange: #f97316;
     
-    --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-sans: 'Nunito', 'Quicksand', ui-rounded, 'SF Pro Rounded', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
     
     --radius-sm: 6px;
