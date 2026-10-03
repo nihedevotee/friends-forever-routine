@@ -150,7 +150,8 @@ class StorageManager {
         if (!group) return;
         const friend = group.friends.find(f => f.id === friendId);
         if (!friend || !friend.courses) return;
-        friend.courses = friend.courses.filter(c => c.id !== courseId && c.courseCode !== courseId);
+        // data-id from the DOM is always a string, but sectionId can be a number — compare as strings
+        friend.courses = friend.courses.filter(c => String(c.id ?? c.courseCode) !== String(courseId));
         this.saveGroups();
     }
 
