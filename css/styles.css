@@ -558,7 +558,7 @@ html, body {
     flex-wrap: wrap;
     gap: 18px;
     position: relative;
-    overflow: hidden;
+    overflow: visible; /* lets the group settings dropdown show fully */
 }
 
 .group-hero-info {

@@ -411,6 +411,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (countBadge) countBadge.textContent = `${(friend.courses || []).length} Courses`;
         if (conflictAlert) conflictAlert.style.display = 'none';
 
+        // Color picker (group accent color is reserved, same as in Add Friend)
+        const groupColor = (group.accentColor || '').toLowerCase();
+        const paletteColors = FRIEND_COLORS.filter(c => c.hex.toLowerCase() !== groupColor);
+        renderColorPalette('friendProfileColorPalette', paletteColors, friend.color, 'friendProfileColor');
+
         renderFriendEnrolledList(friend);
         openModal(modalFriendSchedule);
     }
@@ -467,6 +472,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         });
     }
+
+    // Change friend color
+    document.getElementById('friendProfileColorPalette')?.addEventListener('change', (e) => {
+        if (e.target.name !== 'friendProfileColor') return;
+        window.storageManager.updateFriend(activeGroupId, activeFriendId, { color: e.target.value });
+        openFriendScheduleModal(activeFriendId);
+        renderGroupDetailView();
+    });
 
     // Delete Friend
     document.getElementById('btnDeleteFriend')?.addEventListener('click', () => {
