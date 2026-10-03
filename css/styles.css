@@ -2385,3 +2385,140 @@ html, body {
     font-size: 0.78rem;
     color: var(--text-muted);
 }
+
+
+/* ==========================================================================
+   FINAL TWEAKS (hidden items, large rounded typography, bigger hero logo)
+   ========================================================================== */
+
+/* ---- Hidden items ---- */
+.brand,
+.api-status-badge,
+.hero-desc,
+#btnHeroDemoGroup {
+    display: none !important;
+}
+
+.nav-container {
+    justify-content: flex-end;
+    padding: 8px 20px;
+}
+
+/* ---- Typography: large, bold, rounded (Nunito) ---- */
+html {
+    font-size: 16px;               /* scales the whole UI; 16px = browser default */
+}
+
+body {
+    font-family: 'Nunito', ui-rounded, 'SF Pro Rounded', -apple-system, 'Segoe UI', sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.1px;
+}
+
+h1, h2, h3, h4,
+.section-title,
+.group-card-title,
+.group-hero-name,
+.routine-section-heading,
+.exam-schedule-heading,
+.modal-title {
+    font-weight: 800;
+    letter-spacing: -0.3px;
+}
+
+.section-title {
+    font-size: 1.7rem;
+}
+
+.group-card-title {
+    font-size: 1.4rem;
+}
+
+.hero-subtitle {
+    font-size: 1.45rem;
+    font-weight: 700;
+    margin-bottom: 26px;
+}
+
+.btn {
+    font-weight: 700;
+    border-radius: 12px;
+}
+
+.btn-lg {
+    font-size: 1.05rem;
+}
+
+.form-input,
+.form-select {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 600;
+    border-radius: 12px;
+}
+
+/* Small labels keep the techy look, just a little bolder */
+.hero-tag {
+    font-weight: 800;
+    letter-spacing: 1.6px;
+}
+
+/* ---- Group labels (GROUP 01, 02...): greyish, more visible ---- */
+.group-number-badge,
+.group-meta-tag {
+    color: #b5b5b5 !important;
+    font-size: 0.85rem;
+    font-weight: 800;
+    letter-spacing: 1.8px;
+}
+
+/* ---- Hero logo: keep as is, just bigger ---- */
+.hero-content {
+    max-width: 900px;
+}
+
+.hero-title img {
+    width: min(780px, 96%) !important;
+    height: auto !important;
+    margin: 0 auto !important;
+}
+
+
+/* ==========================================================================
+   SIZE TWEAKS — match the reference screenshot (these come last, so they
+   override the "FINAL TWEAKS" sizes above)
+   ========================================================================== */
+
+html {
+    font-size: 16px;
+}
+
+.nav-container {
+    padding: 12px 20px;
+}
+
+.section-title {
+    font-size: 1.45rem;
+}
+
+.group-card-title {
+    font-size: 1.25rem;
+}
+
+.hero-subtitle {
+    font-size: 1.25rem;
+    margin-bottom: 18px;
+}
+
+.btn-lg {
+    font-size: 1rem;
+}
+
+.group-number-badge,
+.group-meta-tag {
+    font-size: 0.72rem;
+}
+
+/* Logo: about 410px wide (was 780px) */
+.hero-title img {
+    width: min(410px, 90%) !important;
+}
