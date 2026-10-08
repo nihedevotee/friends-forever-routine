@@ -134,10 +134,10 @@ class RoutineRenderer {
                 <div class="routine-class-card" style="--friend-color: ${f.color}">
                     <div class="routine-card-header">
                         <span class="routine-course-code">${c.courseCode}</span>
-                        <div>
-                            ${isLabBadge}
-                            <span class="routine-sec-pill">Sec ${c.sectionName}</span>
-                        </div>
+                        <div class="routine-tags">
+    ${isLabBadge}
+    <span class="routine-sec-pill">Sec ${c.sectionName}</span>
+</div>
                     </div>
                     <div class="routine-friend-pill" style="--friend-color: ${f.color}">
                         <span class="friend-color-dot" style="background:${f.color}; color:${f.color}"></span>
@@ -286,10 +286,10 @@ class RoutineRenderer {
 
             rowsHtml += `
                 <tr id="routineRow_${slot.id}">
-                    <td class="time-slot-label">
-                        <strong>${slot.label.split('-')[0]}</strong><br>
-                        <span style="opacity: 0.7; font-size: 0.7rem;">${slot.label.split('-')[1]}</span>
-                    </td>
+                   <td class="time-slot-label">
+    <span class="time-start">${slot.label.split('-')[0]}</span>
+    <span class="time-end">${slot.label.split('-')[1]}</span>
+</td>
                     ${cellsHtml}
                 </tr>
             `;

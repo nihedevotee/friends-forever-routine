@@ -47,9 +47,17 @@
     padding: 0;
 }
 
+:root {
+    --ui-zoom: 0.9; /* same as browser Ctrl + - zoom to 90% */
+}
+
+html {
+    zoom: var(--ui-zoom);
+}
+
 html, body {
     width: 100%;
-    min-height: 100vh;
+    min-height: calc(100vh / var(--ui-zoom));
     background-color: var(--bg-main);
     color: var(--text-primary);
     font-family: var(--font-sans);
@@ -62,7 +70,7 @@ html, body {
 .app-root {
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
+    min-height: calc(100vh / var(--ui-zoom));
 }
 
 .main-content {
@@ -1345,7 +1353,7 @@ html, body {
     top: 0;
     left: 0;
     width: 100vw;
-    height: 100vh;
+    height: calc(100vh / var(--ui-zoom));
     background: rgba(0, 0, 0, 0.75);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
@@ -1362,7 +1370,7 @@ html, body {
     border-radius: var(--radius-lg);
     width: 100%;
     max-width: 520px;
-    max-height: 90vh;
+    max-height: calc(90vh / var(--ui-zoom));
     display: flex;
     flex-direction: column;
     box-shadow: var(--shadow-lg), 0 0 30px rgba(0, 0, 0, 0.7);
@@ -1376,7 +1384,7 @@ html, body {
 
 .modal-card.modal-xl {
     max-width: 1040px;
-    height: 85vh;
+    height: calc(85vh / var(--ui-zoom));
 }
 
 @keyframes modalPop {
@@ -2522,3 +2530,58 @@ html {
 .hero-title img {
     width: min(410px, 90%) !important;
 }
+/* ==========================================================================
+   ROUTINE TABLE: BIGGER TEXT (same box layout)
+   ========================================================================== */
+
+/* ---- Time column: bigger, same start/end proportion ---- */
+.time-slot-label .time-start {
+    display: block;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+.time-slot-label .time-end {
+    display: block;
+    font-size: 0.98rem;   /* same ~0.9 ratio as before */
+    opacity: 0.7;
+    margin-top: 2px;
+}
+
+/* ---- Single-class cards ---- */
+.routine-class-card {
+    padding: 4px 8px;          /* trimmed so the box stays about the same size */
+}
+.routine-card-header {
+    flex-wrap: nowrap;         /* keep header on one line */
+    margin-bottom: 1px;
+}
+.routine-course-code {
+    font-size: 1rem;
+    white-space: nowrap;
+}
+.routine-tags {                /* LAB + Sec stay together on ONE line */
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.routine-sec-pill {
+    font-size: 0.82rem;
+    white-space: nowrap;
+    padding: 1px 5px;
+}
+.routine-friend-pill {
+    font-size: 0.92rem;
+}
+
+/* ---- Same-time cards (younus / CSE330 – Sec 15 ...) ---- */
+.routine-sametime-card { padding: 6px; }
+.sametime-entry { padding: 3px 6px; }
+.sametime-friend-header { font-size: 0.92rem; }
+.sametime-course-line  { font-size: 0.92rem; margin-top: 0; }
+
+/* ---- Shared-class cards ---- */
+.shared-class-tag   { font-size: 0.8rem; }
+.shared-friend-chip { font-size: 0.9rem; }
+.routine-shared-class-card { padding: 6px 8px; }
