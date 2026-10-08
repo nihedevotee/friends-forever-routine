@@ -2624,3 +2624,97 @@ html {
     font-weight: 700;
     flex-shrink: 0;
 }
+/* ==========================================================================
+   ROUTINE: ZERO FREE SPACE — tight layout
+   ========================================================================== */
+
+.routine-section-wrapper {
+    padding: 12px;
+}
+
+.routine-header-toolbar {
+    margin-bottom: 10px;
+}
+
+.routine-table-container {
+    margin-bottom: 0;
+    border-radius: 6px;
+}
+
+.ff-routine-table th,
+.ff-routine-table td {
+    padding: 4px 5px;
+}
+
+.ff-routine-table th {
+    padding: 7px 5px;
+    font-size: 0.75rem;
+}
+
+.time-col-header {
+    width: 90px;
+    min-width: 90px;
+}
+
+.time-slot-label {
+    padding: 6px 4px !important;
+}
+
+.time-slot-label .time-start {
+    font-size: 0.88rem;
+}
+
+.time-slot-label .time-end {
+    font-size: 0.78rem;
+    margin-top: 1px;
+}
+
+.routine-cell {
+    min-height: 0;
+    height: auto;
+}
+
+.routine-class-card {
+    padding: 3px 6px;
+    margin-bottom: 2px;
+}
+
+.routine-oneline {
+    padding: 3px 6px;
+    font-size: 0.82rem;
+    gap: 4px;
+}
+
+.routine-sametime-card {
+    padding: 4px 5px;
+    margin-bottom: 3px;
+}
+
+.sametime-entry {
+    padding: 2px 5px;
+}
+
+.routine-shared-class-card {
+    padding: 5px 6px;
+    margin-bottom: 3px;
+}
+
+.shared-class-tag {
+    font-size: 0.6rem;
+    margin-bottom: 2px;
+}
+
+.shared-friends-row {
+    gap: 4px;
+    margin-top: 4px;
+    padding-top: 3px;
+}
+
+.shared-friend-chip {
+    font-size: 0.68rem;
+    padding: 1px 5px;
+}
+
+.sametime-entries-list {
+    gap: 3px;
+}

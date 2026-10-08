@@ -290,6 +290,206 @@ class RoutineRenderer {
 
         this.tableBody.innerHTML = rowsHtml;
     }
+
+    /**
+     * Export the FULL routine (all columns, no cut-off) as a PNG.
+     *
+     * Why the previous approach failed:
+     *   html2canvas internally clones the element but still respects the
+     *   browser's computed layout — so even if we set overflow:visible on the
+     *   live element, the cloned document still lays out at the window width
+     *   and clips the overflowing columns.
+     *
+     * Fix: deep-clone the export area into a hidden, position:fixed,
+     *   width:max-content wrapper that lives OUTSIDE the normal document flow.
+     *   html2canvas captures that wrapper, sees every column fully rendered,
+     *   then we discard the clone.
+     *
+     * @param {string} filename
+     * @param {number} scale  – 2 = retina quality
+     */
+    async exportAsImage(filename = 'routine.png', scale = 2) {
+        const group = window.appState?.currentGroup;
+        if (!group) {
+            console.error('exportAsImage: no currentGroup found');
+            return;
+        }
+
+        // ── 1. Build schedule matrix & determine visible slots ───────────────────
+        const matrix = this.buildScheduleMatrix(group.friends);
+
+        const cellHasClass = (day, slot) => (matrix[`${day}_${slot.id}`] || []).length > 0;
+        const dayHasClass  = {};
+        WEEK_DAYS.forEach(day => {
+            dayHasClass[day] = STANDARD_TIME_SLOTS.some(slot => cellHasClass(day, slot));
+        });
+        const anyClass = WEEK_DAYS.some(day => dayHasClass[day]);
+
+        // Trim empty leading/trailing time slots, keep ALL days (including Sunday)
+        let visibleSlots = STANDARD_TIME_SLOTS;
+        if (anyClass) {
+            const slotHasClass = slot => WEEK_DAYS.some(day => cellHasClass(day, slot));
+            let first = 0, last = STANDARD_TIME_SLOTS.length - 1;
+            while (first < last && !slotHasClass(STANDARD_TIME_SLOTS[first])) first++;
+            while (last > first  && !slotHasClass(STANDARD_TIME_SLOTS[last]))  last--;
+            visibleSlots = STANDARD_TIME_SLOTS.slice(first, last + 1);
+        }
+
+        // ── 2. Build full table HTML ─────────────────────────────────────────────
+        const thStyle = `
+            padding:10px 14px;
+            font-size:12px;
+            font-weight:700;
+            letter-spacing:.08em;
+            color:#a3a3a3;
+            text-transform:uppercase;
+            border-bottom:1px solid rgba(255,255,255,.1);
+            border-right:1px solid rgba(255,255,255,.07);
+            white-space:nowrap;
+            background:#111111;
+        `;
+
+        const headerCells = WEEK_DAYS.map(day =>
+            `<th style="${thStyle}">${day}</th>`
+        ).join('');
+
+        let rowsHtml = '';
+        visibleSlots.forEach(slot => {
+            const parts = slot.label.split('-');
+            const start = parts[0] || '';
+            const end   = parts[1] || '';
+
+            const cellsHtml = WEEK_DAYS.map(day => {
+                const items    = matrix[`${day}_${slot.id}`] || [];
+                const analysis = this.analyzeSlotItems(items);
+                const content  = this.renderCellContent(analysis);
+                return `<td style="
+                    padding:6px 8px;
+                    vertical-align:top;
+                    border-right:1px solid rgba(255,255,255,.07);
+                    border-bottom:1px solid rgba(255,255,255,.05);
+                    min-width:150px;
+                    background:#0d0d0f;
+                ">${content}</td>`;
+            }).join('');
+
+            rowsHtml += `<tr>
+                <td style="
+                    padding:8px 16px;
+                    white-space:nowrap;
+                    border-right:1px solid rgba(255,255,255,.1);
+                    border-bottom:1px solid rgba(255,255,255,.05);
+                    font-size:12px;
+                    color:#737373;
+                    font-family:monospace;
+                    vertical-align:middle;
+                    min-width:130px;
+                    width:130px;
+                    background:#111111;
+                ">
+                    <div style="font-weight:700;color:#a3a3a3;font-size:12px;">${start}</div>
+                    <div style="font-size:11px;opacity:.7;margin-top:2px;">${end}</div>
+                </td>${cellsHtml}
+            </tr>`;
+        });
+
+        const tableHtml = `
+            <table style="border-collapse:collapse;width:max-content;table-layout:auto;">
+                <thead><tr>
+                    <th style="${thStyle}min-width:130px;width:130px;color:#737373;">Time / Day</th>
+                    ${headerCells}
+                </tr></thead>
+                <tbody>${rowsHtml}</tbody>
+            </table>
+        `;
+
+        // ── 3. Copy all stylesheets into the iframe srcdoc ───────────────────────
+        const styleLinks = [...document.querySelectorAll('link[rel="stylesheet"]')]
+            .map(l => `<link rel="stylesheet" href="${l.href}">`)
+            .join('\n');
+        const inlineStyles = [...document.querySelectorAll('style')]
+            .map(s => `<style>${s.textContent}</style>`)
+            .join('\n');
+
+        const srcdoc = `<!DOCTYPE html><html><head>
+            <meta charset="UTF-8">
+            ${styleLinks}
+            ${inlineStyles}
+            <style>
+                *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+                body {
+                    background: #0d0d0f;
+                    padding: 28px 32px;
+                    width: max-content;
+                    min-width: max-content;
+                    font-family: 'Nunito', sans-serif;
+                }
+                .export-title {
+                    color: #fafafa;
+                    font-size: 22px;
+                    font-weight: 800;
+                    margin-bottom: 4px;
+                    font-family: 'Nunito', sans-serif;
+                }
+                .export-subtitle {
+                    color: #737373;
+                    font-size: 13px;
+                    margin-bottom: 20px;
+                    font-family: 'Nunito', sans-serif;
+                }
+            </style>
+        </head><body>
+            <div class="export-title">Weekly Class Routine</div>
+            <div class="export-subtitle">Unified schedule with automatic shared-class detection &amp; simultaneous time matching</div>
+            ${tableHtml}
+        </body></html>`;
+
+        // ── 4. Render inside a hidden, oversized iframe ──────────────────────────
+        const iframe = document.createElement('iframe');
+        Object.assign(iframe.style, {
+            position:   'fixed',
+            top:        '0',
+            left:       '-99999px',
+            width:      '5000px',   // wide enough that no column ever wraps
+            height:     '4000px',
+            border:     'none',
+            visibility: 'hidden',
+        });
+        iframe.srcdoc = srcdoc;
+        document.body.appendChild(iframe);
+
+        // Wait for iframe load, then two rAFs for fonts/styles to settle
+        await new Promise(resolve => { iframe.onload = resolve; });
+        await new Promise(r => requestAnimationFrame(r));
+        await new Promise(r => requestAnimationFrame(r));
+
+        const iframeBody = iframe.contentDocument.body;
+        const fullWidth  = iframeBody.scrollWidth;
+        const fullHeight = iframeBody.scrollHeight;
+
+        // ── 5. Capture & download ────────────────────────────────────────────────
+        try {
+            const canvas = await html2canvas(iframeBody, {
+                useCORS:      true,
+                scale,
+                scrollX:      0,
+                scrollY:      0,
+                x:            0,
+                y:            0,
+                width:        fullWidth,
+                height:       fullHeight,
+                windowWidth:  fullWidth,
+                windowHeight: fullHeight,
+            });
+
+            const link     = document.createElement('a');
+            link.download  = filename;
+            link.href      = canvas.toDataURL('image/png');
+            link.click();
+        } finally {
+            document.body.removeChild(iframe);
+        }
+    }
 }
 
 window.routineRenderer = new RoutineRenderer();

@@ -1,12 +1,4 @@
-/**
- * FRIENDS FOREVER — Universal Schedule Screenshot Importer
- *
- * Directly extracts Course Code and Section Number:
- *   - "CSE470-08", "CSE470 08", "CSE470 - 08", "CSE470\n08", "CSE470-\n08"
- *   - "CSE420-21", "CHE101-11", "HUM102-01", "MAT216-01", "STA301-02", "CSE330 11"
- *
- * No teacher codes or room codes required.
- */
+
 
 const OCR_LIB_URL = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
 const PDF_LIB_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';

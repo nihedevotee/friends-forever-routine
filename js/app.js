@@ -1088,16 +1088,88 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Routine image: weekly table only (exam schedule is left out)
-    document.getElementById('btnDownloadRoutine')?.addEventListener('click', () => {
-        const area = document.getElementById('routineExportArea');
-        const examSection = area?.querySelector('.exam-schedule-section');
-        exportAsImage({
-            buttonId: 'btnDownloadRoutine',
-            targetEl: area,
-            hideEls: examSection ? [examSection] : [],
-            suffix: 'routine'
-        });
+    // Routine image: expand table to full width, capture, then restore
+    document.getElementById('btnDownloadRoutine')?.addEventListener('click', async () => {
+        const btn = document.getElementById('btnDownloadRoutine');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<span>Exporting...</span>';
+        btn.disabled = true;
+
+        try {
+            if (typeof html2canvas === 'undefined') {
+                alert("Image export library is unavailable.");
+                return;
+            }
+
+            const group = window.storageManager.getGroup(activeGroupId);
+            if (!group) return;
+
+            const exportArea = document.getElementById('routineExportArea');
+            const tableContainer = exportArea?.querySelector('.routine-table-container');
+            const examSection = exportArea?.querySelector('.exam-schedule-section');
+            if (!exportArea || !tableContainer) return;
+
+            // ── Save original styles ─────────────────────────────────────────────
+            const saved = {
+                containerOverflow:   tableContainer.style.overflow,
+                containerOverflowX:  tableContainer.style.overflowX,
+                containerWidth:      tableContainer.style.width,
+                containerMaxWidth:   tableContainer.style.maxWidth,
+                examDisplay:         examSection ? examSection.style.display : null,
+                bodyOverflow:        document.body.style.overflow,
+            };
+
+            // ── Expand everything so the full table is visible to html2canvas ────
+            tableContainer.style.overflow  = 'visible';
+            tableContainer.style.overflowX = 'visible';
+            tableContainer.style.width     = 'max-content';
+            tableContainer.style.maxWidth  = 'none';
+            if (examSection) examSection.style.display = 'none';
+            document.body.style.overflow = 'visible';
+
+            // Let the browser reflow
+            await new Promise(r => requestAnimationFrame(r));
+            await new Promise(r => requestAnimationFrame(r));
+
+            const fullWidth  = exportArea.scrollWidth;
+            const fullHeight = exportArea.scrollHeight;
+
+            try {
+                const canvas = await html2canvas(exportArea, {
+                    backgroundColor: '#0a0e17',
+                    useCORS:      true,
+                    scale:        2,
+                    scrollX:      -window.scrollX,
+                    scrollY:      -window.scrollY,
+                    width:        fullWidth,
+                    height:       fullHeight,
+                    windowWidth:  fullWidth,
+                    windowHeight: fullHeight,
+                    logging:      false,
+                });
+
+                const groupSlug = group.name.toLowerCase().replace(/\s+/g, '_');
+                const link = document.createElement('a');
+                link.download = `${groupSlug}_routine.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                link.remove();
+            } finally {
+                // ── Always restore original styles ───────────────────────────────
+                tableContainer.style.overflow  = saved.containerOverflow;
+                tableContainer.style.overflowX = saved.containerOverflowX;
+                tableContainer.style.width     = saved.containerWidth;
+                tableContainer.style.maxWidth  = saved.containerMaxWidth;
+                if (examSection) examSection.style.display = saved.examDisplay;
+                document.body.style.overflow = saved.bodyOverflow;
+            }
+        } catch (err) {
+            console.error('Routine export failed:', err);
+            alert('Could not export routine. Please try again.');
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
     });
 
     // Exam image: exam schedule only
