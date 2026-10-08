@@ -183,32 +183,32 @@ class StorageManager {
             friends: [
                 {
                     id: this.generateId('frd'),
-                    name: 'Younus',
-                    nickname: 'Captain',
+                    name: 'YOUNUS',
+                    nickname: 'VibeCoder',
                     color: '#06b6d4', // Cyan
                     courses: [],
                     visibleInRoutine: true
                 },
                 {
                     id: this.generateId('frd'),
-                    name: 'Rahim',
-                    nickname: 'Bug Hunter',
+                    name: 'TAHSIN',
+                    nickname: 'MLSpecialist',
                     color: '#a855f7', // Purple
                     courses: [],
                     visibleInRoutine: true
                 },
                 {
                     id: this.generateId('frd'),
-                    name: 'Fahim',
-                    nickname: 'Night Owl',
+                    name: 'MOHAIMAN',
+                    nickname: 'CgSpecialist',
                     color: '#f97316', // Orange
                     courses: [],
                     visibleInRoutine: true
                 },
                 {
                     id: this.generateId('frd'),
-                    name: 'Sami',
-                    nickname: 'Speedrunner',
+                    name: 'NAFIS',
+                    nickname: 'ChillDude',
                     color: '#10b981', // Green
                     courses: [],
                     visibleInRoutine: true
@@ -243,29 +243,29 @@ class StorageManager {
         const phy111 = findCourse('PHY111');
         const eng101 = findCourse('ENG101');
 
-        const [younus, rahim, fahim, sami] = group.friends;
+        const [younus, tahsin, mohaiman, nafis] = group.friends;
 
         if (younus) {
             if (cse330) younus.courses.push(cse330);
             if (cse422) younus.courses.push(cse422);
             if (cse470) younus.courses.push(cse470);
         }
-        if (rahim) {
-            // Shared CSE330 with Younus!
-            if (cse330) rahim.courses.push(cse330);
+        if (tahsin) {
+            // Shared CSE330 with YOUNUS!
+            if (cse330) tahsin.courses.push(cse330);
             // Different course
-            if (cse340) rahim.courses.push(cse340);
-            if (mat110) rahim.courses.push(mat110);
+            if (cse340) tahsin.courses.push(cse340);
+            if (mat110) tahsin.courses.push(mat110);
         }
-        if (fahim) {
-            if (cse422) fahim.courses.push(cse422); // Shared with Younus
-            if (phy111) fahim.courses.push(phy111);
-            if (eng101) fahim.courses.push(eng101);
+        if (mohaiman) {
+            if (cse422) mohaiman.courses.push(cse422); // Shared with YOUNUS
+            if (phy111) mohaiman.courses.push(phy111);
+            if (eng101) mohaiman.courses.push(eng101);
         }
-        if (sami) {
-            if (cse330) sami.courses.push(cse330); // 3 friends together!
-            if (cse470) sami.courses.push(cse470);
-            if (mat110) sami.courses.push(mat110);
+        if (nafis) {
+            if (cse330) nafis.courses.push(cse330); // 3 friends together!
+            if (cse470) nafis.courses.push(cse470);
+            if (mat110) nafis.courses.push(mat110);
         }
     }
 

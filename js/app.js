@@ -199,7 +199,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const friendsPreview = (g.friends || []).slice(0, 4).map(f => `
                 <div class="group-friend-row">
                     <span class="friend-color-dot" style="background:${f.color}; color:${f.color}"></span>
-                    <span>${f.name}</span>
+                    <span><strong>${f.name}</strong></span>
                 </div>
             `).join('');
 
@@ -310,7 +310,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div class="fec-top-row">
                         <div class="friend-avatar-circle" style="background:${f.color}; color:#000; flex-shrink:0;">${initial}</div>
                         <div class="fec-name-col">
-                            <span class="friend-card-name">${f.name}${f.nickname ? ` <span class="fec-nick">"${f.nickname}"</span>` : ''}</span>
+                            <span class="friend-card-name"><strong>${f.name}</strong>${f.nickname ? ` <span class="fec-nick">"${f.nickname}"</span>` : ''}</span>
                             <span class="friend-card-sub">${courseCount} course${courseCount !== 1 ? 's' : ''} &bull; ${credits} cr</span>
                         </div>
                         <label class="fec-toggle-label" title="Show/hide in routine">
@@ -403,7 +403,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             avatar.style.color = '#000000';
             avatar.style.boxShadow = `0 0 15px ${friend.color}`;
         }
-        if (nameEl) nameEl.textContent = friend.name;
+        if (nameEl) nameEl.innerHTML = `<strong>${friend.name}</strong>`;
         if (nickEl) nickEl.textContent = friend.nickname ? `(${friend.nickname})` : '';
 
         const totalCredits = (friend.courses || []).reduce((acc, c) => acc + (c.courseCredit || 0), 0);
@@ -875,7 +875,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const nickInput = document.getElementById('friendNicknameInput');
         const colorRadio = document.querySelector('input[name="friendColor"]:checked');
 
-        const name = (nameInput?.value || '').trim();
+        const name = (nameInput?.value || '').trim().toUpperCase();
         if (!name) {
             alert('Please enter a friend name.');
             nameInput?.focus();
