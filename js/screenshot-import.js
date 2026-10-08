@@ -1,7 +1,11 @@
 /**
- * FRIENDS FOREVER — Import courses from a schedule screenshot
- * Reads the image with OCR (Tesseract.js, runs inside the browser — the image is never uploaded),
- * finds "COURSE -SECTION" entries (e.g. "CSE470 -01 -NZU-09D-18C") and matches them to the live catalog.
+ * FRIENDS FOREVER — Universal Schedule Screenshot Importer
+ *
+ * Directly extracts Course Code and Section Number:
+ *   - "CSE470-08", "CSE470 08", "CSE470 - 08", "CSE470\n08", "CSE470-\n08"
+ *   - "CSE420-21", "CHE101-11", "HUM102-01", "MAT216-01", "STA301-02", "CSE330 11"
+ *
+ * No teacher codes or room codes required.
  */
 
 const OCR_LIB_URL = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
@@ -12,6 +16,7 @@ const MAX_PDF_PAGES = 10;
 class ScreenshotImporter {
     constructor() {
         this.libPromise = null;
+        this.pdfPromise = null;
     }
 
     /** Load Tesseract.js only when it is first needed */
@@ -61,7 +66,7 @@ class ScreenshotImporter {
         });
     }
 
-    /** Grayscale and (for dark pages) invert a canvas in place so the text is dark-on-light */
+    /** Grayscale and (for dark pages) invert a canvas in place */
     enhanceCanvas(canvas) {
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -106,7 +111,7 @@ class ScreenshotImporter {
         return this.pdfPromise;
     }
 
-    /** Read a PDF: use its text layer first, fall back to OCR on rendered pages (scanned PDFs) */
+    /** Read a PDF: use its text layer first, fall back to OCR on rendered pages */
     async readPdf(file, onProgress) {
         await this.loadPdfLibrary();
         onProgress && onProgress('Opening PDF…', 0.02);
@@ -120,7 +125,6 @@ class ScreenshotImporter {
 
         const pageCount = Math.min(pdf.numPages, MAX_PDF_PAGES);
 
-        // 1) Fast path: real text inside the PDF
         let text = '';
         for (let p = 1; p <= pageCount; p++) {
             const page = await pdf.getPage(p);
@@ -131,7 +135,6 @@ class ScreenshotImporter {
         const direct = this.parseText(text);
         if (direct.length > 0) return direct;
 
-        // 2) Scanned PDF: render each page to an image and OCR it
         const canvases = [];
         for (let p = 1; p <= pageCount; p++) {
             const page = await pdf.getPage(p);
@@ -159,16 +162,24 @@ class ScreenshotImporter {
         return this.ocrCanvases([canvas], onProgress);
     }
 
-    /** Run OCR over one or more canvases (tries two layout modes per page if the first finds nothing) */
+    /** Run OCR across layout modes and merge candidate detections */
     async ocrCanvases(canvases, onProgress) {
         await this.loadLibrary();
 
-        const found = new Map();
-        const addEntries = (list) => list.forEach(e => {
-            const key = `${e.code}|${e.section}`;
-            if (!found.has(key)) found.set(key, e);
-            else if (e.suffix && !found.get(key).suffix) found.get(key).suffix = e.suffix;
-        });
+        const votes = new Map();
+        const suffixMap = new Map();
+
+        const addVotes = (entries) => {
+            entries.forEach(e => {
+                const fullCode = e.code + (e.suffix || '');
+                if (!votes.has(fullCode)) votes.set(fullCode, new Map());
+                const secMap = votes.get(fullCode);
+                secMap.set(e.section, (secMap.get(e.section) || 0) + 1);
+                if (e.suffix) suffixMap.set(fullCode, e.suffix);
+            });
+        };
+
+        const MODES = ['6', '11', '3'];
 
         let worker = null;
         try {
@@ -184,14 +195,10 @@ class ScreenshotImporter {
             });
 
             for (const canvas of canvases) {
-                for (const mode of ['11', '6']) {
+                for (const mode of MODES) {
                     await worker.setParameters({ tessedit_pageseg_mode: mode });
                     const { data } = await worker.recognize(canvas);
-                    const entries = this.parseText(data.text || '');
-                    if (entries.length > 0) {
-                        addEntries(entries);
-                        break;
-                    }
+                    addVotes(this.parseText(data.text || ''));
                 }
             }
         } finally {
@@ -199,56 +206,144 @@ class ScreenshotImporter {
                 try { await worker.terminate(); } catch (e) { /* ignore */ }
             }
         }
-        return Array.from(found.values());
+
+        const results = [];
+        for (const [fullCode, secMap] of votes.entries()) {
+            const sortedSections = Array.from(secMap.entries())
+                .sort((a, b) => b[1] - a[1])
+                .map(([sec]) => sec);
+
+            const bestSec = sortedSections[0];
+            const match = fullCode.match(/^([A-Z]{2,4}\d{3})([A-Z])?$/);
+
+            if (match) {
+                results.push({
+                    code: match[1],
+                    suffix: match[2] || '',
+                    section: bestSec,
+                    candidateSections: sortedSections
+                });
+            } else {
+                results.push({
+                    code: fullCode,
+                    suffix: suffixMap.get(fullCode) || '',
+                    section: bestSec,
+                    candidateSections: sortedSections
+                });
+            }
+        }
+
+        return results;
     }
 
     /**
-     * Find "CSE470 -01", "CSE423L -09" style entries in OCR text.
-     * Returns unique { code, suffix, section } objects.
+     * Universal Parser: Directly matches Course Code and Section Number.
+     *
+     * Patterns matched:
+     *   - "CSE470-08", "CSE470 08", "CSE470 - 08", "CSE470\n08", "CSE470-\n08"
+     *   - "CSE420-21", "CHE101-11", "HUM102-01", "MAT216-01", "STA301-02", "CSE330 11"
      */
     parseText(text) {
-        const t = String(text || '').toUpperCase();
-        const re = /\b([A-Z]{2,4})\s?([0-9OI]{3})\s?([A-Z])?\s*[-–—~_.]\s*([0-9OI]{1,2})(?![0-9])/g;
-        const fixDigits = (s) => s.replace(/O/g, '0').replace(/I/g, '1');
+        const raw = String(text || '').toUpperCase();
 
-        const seen = new Map();
+        const fixDigits = (s) => String(s || '')
+            .replace(/O/g, '0')
+            .replace(/[IL|!\]]/g, '1')
+            .replace(/L/g, '1')
+            .replace(/B/g, '8');
+
+        // Normalize dashes and collapse OCR spaces in department codes
+        let clean = raw
+            .replace(/[\u2010-\u2015\u2212_~]/g, '-')
+            .replace(/\b([A-Z]{1,3})\s+([A-Z]{1,2})\s*([0-9OIlL|]{3})\b/g, '$1$2$3')
+            .replace(/\b([A-Z]{2,4})\s+([0-9OIlL|]{3})\b/g, '$1$2');
+
+        // Universal Course & Section Regex:
+        // DEPT (2-4 letters)
+        // optional separator (dash, spaces, or newline)
+        // NUMBER (3 digits, with OCR substitutions)
+        // optional suffix (e.g. L)
+        // separator (dash, spaces, or newline)
+        // SECTION (1-2 digits, with OCR substitutions)
+        // Negative lookahead: section cannot be followed by alphanumeric room code or time colon
+        const PATTERN = /\b([A-Z]{2,4})[- \t\r\n]*([0-9OIlL|]{3})([A-Z])?[- \t\r\n]+([0-9OIlLB|]{1,2})(?![0-9A-Za-z]|:[0-9])/g;
+
+        const votes = new Map();
         let m;
-        while ((m = re.exec(t)) !== null) {
-            const code = m[1] + fixDigits(m[2]);
+        while ((m = PATTERN.exec(clean)) !== null) {
+            const dept = m[1];
+            const num = fixDigits(m[2]);
             const suffix = m[3] || '';
-            const section = parseInt(fixDigits(m[4]), 10);
-            if (Number.isNaN(section)) continue;
-            const key = `${code}|${section}`;
-            if (!seen.has(key)) {
-                seen.set(key, { code, suffix, section });
-            } else if (suffix && !seen.get(key).suffix) {
-                seen.get(key).suffix = suffix;
-            }
+            const rawSec = fixDigits(m[4]);
+            const sec = parseInt(rawSec, 10);
+
+            if (Number.isNaN(sec) || sec <= 0 || sec > 99) continue;
+
+            const fullCode = dept + num + suffix;
+            if (!votes.has(fullCode)) votes.set(fullCode, new Map());
+            const secMap = votes.get(fullCode);
+            secMap.set(sec, (secMap.get(sec) || 0) + 1);
         }
-        return Array.from(seen.values());
+
+        const results = [];
+        for (const [fullCode, secMap] of votes.entries()) {
+            const sorted = Array.from(secMap.entries())
+                .sort((a, b) => b[1] - a[1])
+                .map(([sec]) => sec);
+
+            const match = fullCode.match(/^([A-Z]{2,4}\d{3})([A-Z])?$/);
+            results.push({
+                code: match ? match[1] : fullCode,
+                suffix: match && match[2] ? match[2] : '',
+                section: sorted[0],
+                candidateSections: sorted
+            });
+        }
+
+        return results;
     }
 
     /**
      * Match parsed entries against the live catalog.
-     * "CSE423L" is the lab part of CSE423, so the plain code is tried first.
+     * Verifies course code and section name against catalog.
+     * Checks primary section and candidate sections found during OCR.
      */
     matchCatalog(entries, catalog) {
         const matched = [];
         const unmatched = [];
         const usedIds = new Set();
 
+        const cleanCode = (code) => String(code || '').replace(/\s+/g, '').toUpperCase();
+
         entries.forEach(entry => {
-            const sameSection = (c) => parseInt(c.sectionName, 10) === entry.section;
-            let course = catalog.find(c => c.courseCode === entry.code && sameSection(c));
-            if (!course && entry.suffix) {
-                course = catalog.find(c => c.courseCode === entry.code + entry.suffix && sameSection(c));
-            }
-            if (course) {
-                if (!usedIds.has(course.id)) {
-                    usedIds.add(course.id);
-                    matched.push({ entry, course });
+            const sectionsToTry = [entry.section, ...(entry.candidateSections || [])]
+                .filter((v, idx, arr) => arr.indexOf(v) === idx && v !== undefined && v !== null);
+
+            const candidates = entry.suffix
+                ? [entry.code + entry.suffix, entry.code]
+                : [entry.code];
+
+            let foundCourse = null;
+            let matchedSection = null;
+
+            for (const sec of sectionsToTry) {
+                const sameSection = (c) => parseInt(c.sectionName, 10) === sec;
+                for (const codeCandidate of candidates) {
+                    const normCandidate = cleanCode(codeCandidate);
+                    foundCourse = catalog.find(c => cleanCode(c.courseCode) === normCandidate && sameSection(c));
+                    if (foundCourse) {
+                        matchedSection = sec;
+                        break;
+                    }
                 }
-            } else {
+                if (foundCourse) break;
+            }
+
+            if (foundCourse && !usedIds.has(foundCourse.id)) {
+                usedIds.add(foundCourse.id);
+                entry.section = matchedSection;
+                matched.push({ entry, course: foundCourse });
+            } else if (!foundCourse) {
                 unmatched.push(entry);
             }
         });
@@ -257,4 +352,13 @@ class ScreenshotImporter {
     }
 }
 
-window.screenshotImporter = new ScreenshotImporter();
+// Attach to window for standard browser script usage
+if (typeof window !== 'undefined') {
+    window.ScreenshotImporter = ScreenshotImporter;
+    window.screenshotImporter = new ScreenshotImporter();
+}
+
+// Support ES/CJS module imports
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { ScreenshotImporter };
+}

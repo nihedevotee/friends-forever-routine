@@ -128,21 +128,15 @@ class RoutineRenderer {
             const f = analysis.friend;
             const c = analysis.course;
             const s = analysis.session;
-            const isLabBadge = s.isLab ? '<span class="routine-sec-pill" style="color:#facc15">LAB</span>' : '';
+            const labTag = s.isLab ? '<span class="line-lab">LAB</span>' : '';
 
             return `
-                <div class="routine-class-card" style="--friend-color: ${f.color}">
-                    <div class="routine-card-header">
-                        <span class="routine-course-code">${c.courseCode}</span>
-                        <div class="routine-tags">
-    ${isLabBadge}
-    <span class="routine-sec-pill">Sec ${c.sectionName}</span>
-</div>
-                    </div>
-                    <div class="routine-friend-pill" style="--friend-color: ${f.color}">
-                        <span class="friend-color-dot" style="background:${f.color}; color:${f.color}"></span>
-                        <span>${f.name}</span>
-                    </div>
+                <div class="routine-class-card routine-oneline" style="--friend-color: ${f.color}">
+                    <span class="friend-color-dot" style="background:${f.color}; color:${f.color}"></span>
+                    <span class="line-name">${f.name}</span>
+                    <span class="line-course">${c.courseCode}</span>
+                    <span class="line-sec">sec${c.sectionName}</span>
+                    ${labTag}
                 </div>
             `;
         }
@@ -184,15 +178,14 @@ class RoutineRenderer {
                 const s = grp.session;
 
                 grp.friends.forEach(f => {
+                    const labTag = s.isLab ? '<span class="line-lab">LAB</span>' : '';
                     entriesHtml += `
-                        <div class="sametime-entry" style="--friend-color: ${f.color}">
-                            <div class="sametime-friend-header">
-                                <span class="friend-color-dot" style="background:${f.color}; color:${f.color}"></span>
-                                <span>${f.name}</span>
-                            </div>
-                            <div class="sametime-course-line">
-                                <strong>${c.courseCode}</strong> — Sec ${c.sectionName}
-                            </div>
+                        <div class="sametime-entry routine-oneline" style="--friend-color: ${f.color}">
+                            <span class="friend-color-dot" style="background:${f.color}; color:${f.color}"></span>
+                            <span class="line-name">${f.name}</span>
+                            <span class="line-course">${c.courseCode}</span>
+                            <span class="line-sec">sec${c.sectionName}</span>
+                            ${labTag}
                         </div>
                     `;
                 });

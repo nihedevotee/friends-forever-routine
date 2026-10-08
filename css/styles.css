@@ -2585,3 +2585,42 @@ html {
 .shared-class-tag   { font-size: 0.8rem; }
 .shared-friend-chip { font-size: 0.9rem; }
 .routine-shared-class-card { padding: 6px 8px; }
+
+/* ---- One-line cards:  ● younus cse330 sec11 ---- */
+.routine-oneline {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+    overflow: hidden;
+    padding: 4px 8px;
+    font-size: 0.92rem;
+    line-height: 1.3;
+}
+.routine-oneline .friend-color-dot { flex-shrink: 0; }
+.routine-oneline .line-name {
+    font-weight: 700;
+    color: var(--friend-color, #ffffff);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+}
+.routine-oneline .line-course {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    text-transform: lowercase;
+    color: var(--friend-color, #ffffff);
+    flex-shrink: 0;
+}
+.routine-oneline .line-sec {
+    color: var(--friend-color, #ffffff);
+    opacity: 0.8;
+    flex-shrink: 0;
+}
+.routine-oneline .line-lab {
+    color: #facc15;
+    font-size: 0.72rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
