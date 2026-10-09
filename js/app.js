@@ -345,9 +345,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const fId = btn.getAttribute('data-id');
                 activeFriendId = fId;
                 openFriendScheduleModal(fId);
-                setTimeout(() => {
-                    document.getElementById('btnOpenCourseSearch')?.click();
-                }, 120);
             });
         });
 
