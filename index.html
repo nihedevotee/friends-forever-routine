@@ -32,8 +32,8 @@
                 </div>
 
                 <div class="nav-actions">
-                    <div class="nav-social-icons" style="display:flex;align-items:center;gap:6px;margin-right:10px;border-right:1px solid rgba(255,255,255,0.1);padding-right:14px;">
-                        <div style="display:flex;flex-direction:column;align-items:flex-end;margin-right:8px;line-height:1.5;">
+<div class="nav-social-icons" style="display:flex;align-items:center;gap:6px;margin-right:10px;border-right:1px solid rgba(255,255,255,0.1);padding-right:14px;">
+                        <div style="display:flex;flex-direction:column;align-items:flex-end;margin-right:8px;line-height:1.5;gap:2px;">
                             <span style="font-size:0.72rem;color:#ffffff;font-weight:700;white-space:nowrap;">Found a bug? Reach out to me 🐛</span>
                             <span style="font-size:0.72rem;color:#ffffff;font-weight:700;white-space:nowrap;">Follow me on GitHub hehe 😄</span>
                         </div>
@@ -651,6 +651,124 @@
         </div>
     </div>
 
+    <!-- Hidden tracking pixel — increments hits.sh counter on every page load -->
+    <img src="https://hits.sh/nihedevotee.github.io/friends-forever.svg?label=👁️+visits&color=6366f1&labelColor=1e1e2e&style=flat-square"
+         alt="" aria-hidden="true"
+         id="hitsTrackerImg"
+         style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;"
+         onload="(function(img){
+             try {
+                 /* hits.sh returns an SVG; we parse the visit number from its text nodes */
+                 var src = img.src;
+                 fetch(src).then(function(r){ return r.text(); }).then(function(svg){
+                     var m = svg.match(/>(\d[\d,]*)</g);
+                     if(m && m.length){
+                         var nums = m.map(function(s){ return s.replace(/[^\d,]/g,''); }).filter(Boolean);
+                         /* last number-looking chunk is usually the count */
+                         var count = nums[nums.length-1];
+                         var el = document.getElementById('visitCountPill');
+                         if(el && count) el.textContent = count;
+                     }
+                 }).catch(function(){});
+             } catch(e){}
+         })(this)"
+    />
+
+    <!-- View Icon: Upper Left Corner -->
+    <div id="viewIconCorner" title="Back to Home" onclick="document.getElementById('viewLanding') && (()=>{ const panels = document.querySelectorAll('.view-panel'); panels.forEach(p=>p.style.display='none'); const landing = document.getElementById('viewLanding'); if(landing){ landing.style.display=''; landing.classList.add('active'); } const breadcrumb = document.getElementById('navGroupBreadcrumb'); if(breadcrumb) breadcrumb.style.display='none'; const allGroupsBtn = document.getElementById('navAllGroupsBtn'); if(allGroupsBtn) allGroupsBtn.style.display='none'; })()" style="
+        position: fixed;
+        top: 18px;
+        left: 18px;
+        z-index: 9999;
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        filter: drop-shadow(0 2px 8px rgba(99,102,241,0.45));
+        transition: filter 0.2s, transform 0.2s;
+    " onmouseover="this.style.filter='drop-shadow(0 4px 16px rgba(99,102,241,0.75))';this.style.transform='scale(1.12)'" onmouseout="this.style.filter='drop-shadow(0 2px 8px rgba(99,102,241,0.45))';this.style.transform='scale(1)'">
+        <svg viewBox="0 0 44 44" width="44" height="44" xmlns="http://www.w3.org/2000/svg">
+            <!-- Outer diamond frame -->
+            <polygon points="22,2 42,22 22,42 2,22"
+                fill="none"
+                stroke="url(#viewGrad)"
+                stroke-width="2.2"
+                stroke-linejoin="round"
+            />
+            <!-- Inner rotated square -->
+            <rect x="12.5" y="12.5" width="19" height="19" rx="2"
+                transform="rotate(45 22 22)"
+                fill="rgba(99,102,241,0.13)"
+                stroke="url(#viewGrad)"
+                stroke-width="1.4"
+            />
+            <!-- Central circle (the "pupil") -->
+            <circle cx="22" cy="22" r="5.5"
+                fill="url(#viewGrad)"
+                opacity="0.92"
+            />
+            <!-- Subtle inner dot -->
+            <circle cx="22" cy="22" r="2.2"
+                fill="white"
+                opacity="0.82"
+            />
+            <!-- Accent tick marks on corners -->
+            <line x1="22" y1="5.5" x2="22" y2="9.5" stroke="url(#viewGrad)" stroke-width="1.8" stroke-linecap="round"/>
+            <line x1="22" y1="34.5" x2="22" y2="38.5" stroke="url(#viewGrad)" stroke-width="1.8" stroke-linecap="round"/>
+            <line x1="5.5" y1="22" x2="9.5" y2="22" stroke="url(#viewGrad)" stroke-width="1.8" stroke-linecap="round"/>
+            <line x1="34.5" y1="22" x2="38.5" y2="22" stroke="url(#viewGrad)" stroke-width="1.8" stroke-linecap="round"/>
+            <defs>
+                <linearGradient id="viewGrad" x1="2" y1="2" x2="42" y2="42" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stop-color="#818cf8"/>
+                    <stop offset="55%" stop-color="#6366f1"/>
+                    <stop offset="100%" stop-color="#a855f7"/>
+                </linearGradient>
+            </defs>
+        </svg>
+    </div>
+
+    <!-- Visit count pill — sits just below the view icon -->
+    <div id="visitCountBadge" title="Total visits" style="
+        position: fixed;
+        top: 66px;
+        left: 50%;
+        transform: translateX(-50%);
+        /* align under the 44px icon centered at left:18px → center = 18+22 = 40px */
+        left: 40px;
+        transform: translateX(-50%);
+        z-index: 9998;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        background: rgba(30,30,46,0.82);
+        border: 1px solid rgba(99,102,241,0.35);
+        border-radius: 20px;
+        padding: 2px 8px 2px 6px;
+        backdrop-filter: blur(6px);
+        pointer-events: none;
+        white-space: nowrap;
+    ">
+        <svg viewBox="0 0 14 14" width="11" height="11" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="7" cy="7" r="6" fill="url(#vcGrad)" opacity="0.9"/>
+            <circle cx="7" cy="7" r="2.5" fill="white" opacity="0.85"/>
+            <defs>
+                <linearGradient id="vcGrad" x1="1" y1="1" x2="13" y2="13" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stop-color="#818cf8"/>
+                    <stop offset="100%" stop-color="#a855f7"/>
+                </linearGradient>
+            </defs>
+        </svg>
+        <span id="visitCountPill" style="
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: #c7d2fe;
+            letter-spacing: 0.02em;
+            font-family: 'JetBrains Mono', monospace;
+        ">…</span>
+    </div>
+
     <!-- Scripts -->
     <script src="./js/data.js"></script>
     <script src="./js/storage.js"></script>
@@ -659,5 +777,29 @@
     <script src="./js/exams.js"></script>
     <script src="./js/screenshot-import.js"></script>
     <script src="./js/app.js"></script>
+
+    <!-- Visit Counter Script -->
+    <script>
+        async function loadVisitCounter() {
+            const NAMESPACE = "friends-forever-routine-planner";
+            const KEY = "visits";
+            try {
+                const response = await fetch(
+                    `https://abacus.jasoncameron.dev/hit/${NAMESPACE}/${KEY}`
+                );
+                if (!response.ok) throw new Error("Failed to fetch visit count");
+                const data = await response.json();
+                const el = document.getElementById("visitCountPill");
+                if (el) {
+                    el.textContent = data.value.toLocaleString();
+                }
+            } catch (error) {
+                const el = document.getElementById("visitCountPill");
+                if (el) el.textContent = "—";
+                console.error("Visit counter error:", error);
+            }
+        }
+        loadVisitCounter();
+    </script>
 </body>
 </html>
