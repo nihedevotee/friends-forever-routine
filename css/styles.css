@@ -2718,3 +2718,109 @@ html {
 .sametime-entries-list {
     gap: 3px;
 }
+
+/* ================= VISIT COUNTER WIDGET ================= */
+
+/* Fixed floating pill beneath the diamond icon */
+.visit-counter-badge {
+    position: fixed;
+    top: 66px;
+    left: 40px;
+    transform: translateX(-50%);
+    z-index: 9998;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(30, 30, 46, 0.82);
+    border: 1px solid rgba(99, 102, 241, 0.35);
+    border-radius: var(--radius-full);
+    padding: 2px 8px 2px 6px;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+/* The number text inside the pill */
+.visit-counter-number {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #c7d2fe;
+    letter-spacing: 0.02em;
+    font-family: var(--font-mono);
+}
+
+/* Hide on mobile (≤640px) — navbar too tight */
+@media (max-width: 640px) {
+    .visit-counter-badge {
+        display: none;
+    }
+}
+
+.visit-counter-widget {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    padding-right: 12px;
+    border-right: 1px solid var(--border-subtle);
+}
+
+.visit-counter-inner {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.visit-counter-pill {
+    background: rgba(109, 40, 217, 0.35);
+    border: 1px solid rgba(167, 139, 250, 0.45);
+    border-radius: var(--radius-full);
+    padding: 2px 10px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    min-width: 56px;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+.visit-counter-number {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #e9d5ff;
+    letter-spacing: 0.04em;
+}
+
+/* Hide counter on mobile — navbar is already tight */
+@media (max-width: 640px) {
+    .visit-counter-widget {
+        display: none;
+    }
+}
+/* Mobile-only social/contact bar visibility.
+   Desktop styling remains untouched. On mobile, show the bar on the landing
+   page, but hide it inside a group or while the Create Group modal is open. */
+@media (max-width: 768px) {
+    #viewIconCorner {
+        display: none !important;
+    }
+
+    .nav-social-icons {
+        display: flex !important;
+    }
+
+    /* Group detail view */
+    body:has(#viewGroupDetail.active) .nav-social-icons,
+    body:has(#viewGroupDetail:not([style*="display: none"])) .nav-social-icons,
+
+    /* Add Group creation modal/panel */
+    body:has(#modalGroup:not([style*="display: none"])) .nav-social-icons {
+        display: none !important;
+    }
+}
